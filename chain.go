@@ -108,7 +108,7 @@ func (cr *Chain) readLoop() {
 	}
 }
 
-func handleEvents(cr *Chain, file *os.File, debugMode bool) {
+func handleEvents(cr *Chain, file *os.File, debugMode bool, nodeRole string) {
 	peerRefreshTicker := time.NewTicker( 1 * time.Second)
 	defer peerRefreshTicker.Stop()
 
@@ -116,47 +116,50 @@ func handleEvents(cr *Chain, file *os.File, debugMode bool) {
 	writer := csv.NewWriter(file)
 
 	for {
-	select {
+		select {
 
-	case m := <-cr.block:
-		// when we receive a message, print it to the message window
-		timestamp := time.Now()
-		timeString := timestamp.Format("2006-01-02 15:04:05")
-		data := []string{timeString , "Received", m.SenderID}
+		case m := <-cr.block:
+			if nodeRole != "builder" {
+				// when we receive a message, print it to the message window
+				timestamp := time.Now()
+				timeString := timestamp.Format("2006-01-02 15:04:05")
+				data := []string{timeString , "Received", m.SenderID}
 
-		err := writer.Write(data)
-		if err != nil {
-			log.Fatal("Error writing CSV:", err)
-		}
+				err := writer.Write(data)
+				if err != nil {
+					log.Fatal("Error writing CSV:", err)
+				}
 
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			log.Fatal("Error flushing CSV writer:", err)
-		}
-		if debugMode {
-			fmt.Println(timestamp, "  ", m.SenderID)
-		}
-			
-	case <-peerRefreshTicker.C:
-		err := cr.Publish(createAndConcatenate())
-		if err != nil {
-			fmt.Println("publish error: %s", err)
-		}
-				
-		timestamp := time.Now()
-		timeString := timestamp.Format("2006-01-02 15:04:05")
-		data := []string{timeString , "Send", cr.nick}
+				writer.Flush()
+				if err := writer.Error(); err != nil {
+					log.Fatal("Error flushing CSV writer:", err)
+				}
+				if debugMode {
+					fmt.Println(timestamp, "  ", m.SenderID)
+				}
+			}
+		case <-peerRefreshTicker.C:
+				if nodeRole == "builder" {
+				err := cr.Publish(createAndConcatenate())
+				if err != nil {
+					fmt.Println("publish error: %s", err)
+				}
+						
+				timestamp := time.Now()
+				timeString := timestamp.Format("2006-01-02 15:04:05")
+				data := []string{timeString , "Send", cr.nick}
 
-		err = writer.Write(data)
-		if err != nil {
-			log.Fatal("Error writing CSV:", err)
+				err = writer.Write(data)
+				if err != nil {
+					log.Fatal("Error writing CSV:", err)
+				}
+						
+				writer.Flush()
+				if err := writer.Error(); err != nil {
+					log.Fatal("Error flushing CSV writer:", err)
+				}
+			}
 		}
-				
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			log.Fatal("Error flushing CSV writer:", err)
-		}
-	}
 	}
 }
 

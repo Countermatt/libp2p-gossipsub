@@ -26,12 +26,14 @@ func main() {
 	var duration int
 	nickFlag := flag.String("nick", "", "nickname for node")
 	chainFlag := flag.String("chain", "test-chain", "name of the chain")
-	// nodeType := flag.String("chain", "validator", "type of node:builder, nonvalidator, builder, validator")
+	nodeType := flag.String("nodeType", "builder", "type of node:builder, nonvalidator, builder, validator")
     flag.IntVar(&duration, "duration", 15, "Experiment duration (in seconds).")
 
 	flag.Parse()
 
 	ctx := context.Background()
+
+	nodeRole := *nodeType
 
 	var debugMode bool = true
 
@@ -80,7 +82,7 @@ func main() {
 
 	go func() {
 		for true{
-			handleEvents(cr, file, debugMode)
+			handleEvents(cr, file, debugMode, nodeRole)
 		}
 	}()
 

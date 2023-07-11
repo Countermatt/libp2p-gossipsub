@@ -29,7 +29,7 @@ nb_node_per_cpu = nb_node//10
 network = en.G5kNetworkConf(type="prod", roles=["experiment_network"], site=site)
 
 conf = (
-    en.G5kConf.from_settings(job_name="Louvain-job-1", walltime="0:35:00")
+    en.G5kConf.from_settings(job_name="Louvain-job-1", walltime="0:02:00")
     .add_network_conf(network)
     #.add_machine(roles=["experiment"], cluster="gros", nodes=nb_node-1, primary_network=network)
     .add_machine(roles=["first"], cluster=cluster, nodes=10, primary_network=network)
@@ -56,18 +56,8 @@ netem.deploy()
 netem.validate()
 
 with en.actions(roles=roles["first"], on_error_continue=True, background=True) as p:
-    p.shell("cd /tmp & git clone https://github.com/Countermatt/libp2p-gossipsub.git")
+    p.shell("/home/" + login + "/run.sh " + str(arguments) + " /home/" + login + "/result/")
 
-with en.actions(roles=roles["first"], on_error_continue=True, background=True) as p:
-    p.shell("cd libp2p-gossipsub")
-
-with en.actions(roles=roles["first"], on_error_continue=True, background=True) as p:
-    p.shell("/tmp/libp2p-gossipsub/run.sh " + str(arguments) + " /home/" + login + "/result")
-#with en.actions(roles=roles["experiment"]) as p:
-#    p.shell("/home/mapigaglio/run1.sh "  + str(arguments))
-#launch script with list of nodes for arguments
-#results = en.run_command("/home/mapigaglio/run1.sh "  + str(arguments), roles=roles["first"])
-#results = en.run_command("/home/mapigaglio/run2.sh "  + str(arguments), roles=roles["experiments"])
 
 x = datetime.datetime.now()
 h,m,s = convert_seconds_to_time(arguments)
