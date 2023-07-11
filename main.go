@@ -26,13 +26,14 @@ func main() {
 	var duration int
 	nickFlag := flag.String("nick", "", "nickname for node")
 	chainFlag := flag.String("chain", "test-chain", "name of the chain")
+	// nodeType := flag.String("chain", "validator", "type of node:builder, nonvalidator, builder, validator")
     flag.IntVar(&duration, "duration", 15, "Experiment duration (in seconds).")
 
 	flag.Parse()
 
 	ctx := context.Background()
 
-	var debugMode bool = false
+	var debugMode bool = true
 
 	if debugMode {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")

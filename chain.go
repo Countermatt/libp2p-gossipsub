@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"time"
 	"fmt"
-	"crypto/rand"
+	"math/rand"
 	"encoding/csv"
 	"log"
 	"os"
 
 	"github.com/libp2p/go-libp2p/core/peer"
-
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
@@ -19,7 +18,7 @@ import (
 // can be published to the topic with ChatRoom.Publish, and received
 // messages are pushed to the Messages channel.
 
-const ChainBufSize = 128
+const ChainBufSize = 1280000000
 
 type Chain struct {
 	// Messages is a channel of messages received from other peers in the chat room
@@ -110,56 +109,77 @@ func (cr *Chain) readLoop() {
 }
 
 func handleEvents(cr *Chain, file *os.File, debugMode bool) {
-	peerRefreshTicker := time.NewTicker(time.Second)
+	peerRefreshTicker := time.NewTicker( 1 * time.Second)
 	defer peerRefreshTicker.Stop()
 
 	//Open csv log file
 	writer := csv.NewWriter(file)
 
 	for {
-		select {
+	select {
 
-		case m := <-cr.block:
-			// when we receive a message, print it to the message window
-			timestamp := time.Now()
-			timeString := timestamp.Format("2006-01-02 15:04:05")
-			data := []string{timeString , "Received", m.SenderID}
+	case m := <-cr.block:
+		// when we receive a message, print it to the message window
+		timestamp := time.Now()
+		timeString := timestamp.Format("2006-01-02 15:04:05")
+		data := []string{timeString , "Received", m.SenderID}
 
-			err := writer.Write(data)
-			if err != nil {
-				log.Fatal("Error writing CSV:", err)
-			}
+		err := writer.Write(data)
+		if err != nil {
+			log.Fatal("Error writing CSV:", err)
+		}
 
-			writer.Flush()
-			if err := writer.Error(); err != nil {
-				log.Fatal("Error flushing CSV writer:", err)
-			}
-			if debugMode {
-				fmt.Println(timestamp, "  ", m.SenderID)
-			}
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			log.Fatal("Error flushing CSV writer:", err)
+		}
+		if debugMode {
+			fmt.Println(timestamp, "  ", m.SenderID)
+		}
 			
-		case <-peerRefreshTicker.C:
-			sample := make([]byte, 42000)
-			_, err := rand.Read(sample)
-			err = cr.Publish(sample)
-			if err != nil {
-				fmt.Println("publish error: %s", err)
-			}
-			
-			timestamp := time.Now()
-			timeString := timestamp.Format("2006-01-02 15:04:05")
-			data := []string{timeString , "Send", cr.nick}
+	case <-peerRefreshTicker.C:
+		err := cr.Publish(createAndConcatenate())
+		if err != nil {
+			fmt.Println("publish error: %s", err)
+		}
+				
+		timestamp := time.Now()
+		timeString := timestamp.Format("2006-01-02 15:04:05")
+		data := []string{timeString , "Send", cr.nick}
 
-			err = writer.Write(data)
-			if err != nil {
-				log.Fatal("Error writing CSV:", err)
-			}
-			
-			writer.Flush()
-			if err := writer.Error(); err != nil {
-				log.Fatal("Error flushing CSV writer:", err)
-			}
-
+		err = writer.Write(data)
+		if err != nil {
+			log.Fatal("Error writing CSV:", err)
+		}
+				
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			log.Fatal("Error flushing CSV writer:", err)
 		}
 	}
+	}
+}
+
+func createAndConcatenate() []byte {
+	// Initialize the random number generator
+	rand.Seed(time.Now().UnixNano())
+
+	// Define the length of each slice and the number of slices
+	sliceLength := 42
+	numSlices := 5*5
+
+	// Create a slice to store the concatenated result
+	concatenated := make([]byte, 0)
+
+	// Create and concatenate the random slices
+	for i := 0; i < numSlices; i++ {
+		// Create a random slice
+		randomSlice := make([]byte, sliceLength)
+		rand.Read(randomSlice)
+
+		// Concatenate the random slice to the result
+		concatenated = append(concatenated, randomSlice...)
+	}
+
+	return concatenated
 }
