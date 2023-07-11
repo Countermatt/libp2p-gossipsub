@@ -26,7 +26,7 @@ func main() {
 	var duration int
 	nickFlag := flag.String("nick", "", "nickname for node")
 	chainFlag := flag.String("chain", "test-chain", "name of the chain")
-	nodeType := flag.String("nodeType", "builder", "type of node:builder, nonvalidator, builder, validator")
+	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
     flag.IntVar(&duration, "duration", 15, "Experiment duration (in seconds).")
 
 	flag.Parse()
@@ -72,7 +72,7 @@ func main() {
 	}
 
 	//Create CSV file for logging
-	file, err := os.Create(nick+".csv")
+	file, err := os.Create(nodeRole + "-" + nick + ".csv")
 	if err != nil {
 		log.Fatal("Error creating file:", err)
 	}
