@@ -9,6 +9,7 @@ import (
 	"encoding/csv"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -19,6 +20,12 @@ import (
 // messages are pushed to the Messages channel.
 
 const ChainBufSize = 1280000000
+
+type SampleGiven struct {
+	Block int
+	Column int 
+	Row int
+}
 
 type Chain struct {
 	// Messages is a channel of messages received from other peers in the chat room
@@ -32,6 +39,10 @@ type Chain struct {
 	roomName string
 	self     peer.ID
 	nick     string
+
+	//Builder Item
+	SampleList []SampleGiven
+	sizeBlock int
 }
 
 type Block struct {
@@ -40,7 +51,7 @@ type Block struct {
 	SenderNick string
 }
 
-func JoinChain(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, roomName string) (*Chain, error) {
+func JoinChain(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, roomName string, sizeBlock int) (*Chain, error) {
 	// join the pubsub topic
 	topic, err := ps.Join(topicName(roomName))
 	if err != nil {
@@ -62,6 +73,7 @@ func JoinChain(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname 
 		nick:     nickname,
 		roomName: roomName,
 		block: make(chan *Block, ChainBufSize),
+		sizeBlock: sizeBlock,
 	}
 
 	// start reading block from the subscription in a loop
@@ -109,13 +121,20 @@ func (cr *Chain) readLoop() {
 }
 
 func handleEvents(cr *Chain, file *os.File, debugMode bool, nodeRole string) {
-	peerRefreshTicker := time.NewTicker( 1 * time.Second)
+	peerRefreshTicker := time.NewTicker( 1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
 
+
+	//for builder
+	Sendsample := createsample()
+	blockNumber := 0
+	row := 0
+	column := 0
 	//Open csv log file
 	writer := csv.NewWriter(file)
-
+	rand.Seed(time.Now().UnixNano())
 	for {
+
 		select {
 
 		case m := <-cr.block:
@@ -140,49 +159,79 @@ func handleEvents(cr *Chain, file *os.File, debugMode bool, nodeRole string) {
 			}
 		case <-peerRefreshTicker.C:
 				if nodeRole == "builder" {
-				err := cr.Publish(createAndConcatenate())
-				if err != nil {
-					fmt.Println("publish error: %s", err)
-				}
-						
-				timestamp := time.Now()
-				timeString := timestamp.Format("2006-01-02 15:04:05")
-				data := []string{timeString , "Send", cr.nick}
 
-				err = writer.Write(data)
-				if err != nil {
-					log.Fatal("Error writing CSV:", err)
-				}
-						
-				writer.Flush()
-				if err := writer.Error(); err != nil {
-					log.Fatal("Error flushing CSV writer:", err)
-				}
+
+					Sample := SampleGiven{blockNumber, row,  column}
+
+					if (row%cr.sizeBlock == 0 &&  column%cr.sizeBlock == 0 && column>0  && row>0){
+						blockNumber += 1
+						column = 0
+						row = 0
+					}
+					if (row%cr.sizeBlock == 0 && row >0){
+						column += 1
+						row = 0
+					}
+
+					row += 1
+					fmt.Println("BLOCK:", Sample.Block, "/SAMPLE:", Sample.Column, Sample.Row)
+					
+					cr.SampleList = append(cr.SampleList, Sample)
+					err := cr.Publish(publishBlock(Sample, Sendsample))
+					if err != nil {
+						fmt.Println("publish error: %s", err)
+					}
+							
+					timestamp := time.Now()
+					timeString := timestamp.Format("2006-01-02 15:04:05")
+					data := []string{timeString , "PUT", strconv.Itoa(Sample.Block), strconv.Itoa(Sample.Column), strconv.Itoa(Sample.Row), cr.nick}
+
+					err = writer.Write(data)
+					if err != nil {
+						log.Fatal("Error writing CSV:", err)
+					}
+							
+					writer.Flush()
+					if err := writer.Error(); err != nil {
+						log.Fatal("Error flushing CSV writer:", err)
+					}
 			}
 		}
 	}
 }
+func createsample() []byte {
+	rand.Seed(time.Now().UnixNano())
+	sliceLength := 42
+	randomSlice := make([]byte, sliceLength)
+	rand.Read(randomSlice)
+	return randomSlice
+}
 
-func createAndConcatenate() []byte {
+func publishBlock(Sample SampleGiven, Sendsample []byte) []byte {
 	// Initialize the random number generator
 	rand.Seed(time.Now().UnixNano())
-
-	// Define the length of each slice and the number of slices
-	sliceLength := 42
-	numSlices := 5*5
 
 	// Create a slice to store the concatenated result
 	concatenated := make([]byte, 0)
 
-	// Create and concatenate the random slices
-	for i := 0; i < numSlices; i++ {
-		// Create a random slice
-		randomSlice := make([]byte, sliceLength)
-		rand.Read(randomSlice)
-
-		// Concatenate the random slice to the result
-		concatenated = append(concatenated, randomSlice...)
-	}
-
+	concatenated = append(concatenated, byte(Sample.Block))
+	concatenated = append(concatenated, byte(Sample.Column))
+	concatenated = append(concatenated, byte(Sample.Row))
+	concatenated = append(concatenated, Sendsample...)
 	return concatenated
+}
+
+
+func containsTuple(list []SampleGiven, target SampleGiven) bool {
+	for _, tuple := range list {
+		if tuple == target {
+			return true
+		}
+	}
+	return false
+}
+
+func randomIntInRange(x int) int {
+	rand.Seed(time.Now().UnixNano()) // Initialize the random number generator with a seed based on the current time
+	return rand.Intn(x + 1) // Generate a random number between 0 and x (inclusive)
 }

@@ -20,16 +20,16 @@ en.check()
 #Change to your Grid5000 user
 login = "mapigaglio"
 site = "nancy"
-cluster = "gros"
+cluster = "grisou"
 
 #Node type configuration
 nb_real_node = 10
-nb_node = 360
+nb_node = 20
 nb_builder = 2
 nb_validator = 18
 nb_node_per_cpu = nb_node//nb_real_node
 
-arguments = 20  # nb_second
+arguments = 120  # nb_second
 
 
 #conf each node
@@ -65,7 +65,7 @@ while tmp > 0:
 network = en.G5kNetworkConf(type="prod", roles=["experiment_network"], site=site)
 
 conf = (
-    en.G5kConf.from_settings(job_name="Louvain-job-1", walltime="0:02:00")
+    en.G5kConf.from_settings(job_name="Louvain-job-1", walltime="0:03:00")
     .add_network_conf(network)
     #.add_machine(roles=["experiment"], cluster="gros", nodes=nb_node-1, primary_network=network)
     .add_machine(roles=["first"], cluster=cluster, nodes=nb_real_node, primary_network=network)
@@ -90,6 +90,9 @@ netem = en.NetemHTB()
 
 netem.deploy()
 netem.validate()
+
+for x in roles["first"]:
+    with en.actions(roles=x, on_error_continue=True, background=True) as p:
 
 i = 0
 for x in roles["first"]:

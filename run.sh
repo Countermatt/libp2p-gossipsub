@@ -15,21 +15,21 @@ cd libp2p-gossipsub
 for (( i=0; i<$3; i++ ))
     do
         go run . -duration $1 -nodeType builder &
-        sleep 0.5
+        sleep 0.1
     done
 
 #Run validator
 for (( i=0; i<$4; i++ ))
     do
         go run . -duration $1 -nodeType validator &
-        sleep 0.5
+        sleep 0.1
     done
 
 #Run other nodes
 for (( i=0; i<$5-1; i++ ))
     do
         go run . -duration $1 -nodeType nonvalidator &
-        sleep 0.5
+        sleep 0.1
     done
     go run . -duration $1 -nodeType nonvalidator 
 if [!-d /home/mapigaglio/result]; then

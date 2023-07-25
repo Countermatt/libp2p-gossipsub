@@ -65,8 +65,10 @@ func main() {
 	// join the room from the cli flag, or the flag default
 	room := *chainFlag
 
+	//Block size
+	sizeBlock := 20
 	// join the chat room
-	cr, err := JoinChain(ctx, ps, h.ID(), nick, room)
+	cr, err := JoinChain(ctx, ps, h.ID(), nick, room, sizeBlock)
 	if err != nil {
 		panic(err)
 	}
