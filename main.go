@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 	"log"
+	"runtime"
+	"math"
 
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -29,7 +31,7 @@ func main() {
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
-    flag.IntVar(&duration, "duration", 30, "Experiment duration (in seconds).")
+    flag.IntVar(&duration, "duration", 5, "Experiment duration (in seconds).")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -76,26 +78,40 @@ func main() {
 	}
 	defer file.Close()
 	
+
 	timer := time.NewTimer(time.Duration(duration) * time.Second)
 	time.Sleep(1 * time.Second)
+	
+	//Start time for load metrics
+	startTime := time.Now()
+	
 	go func() {
-
-		if nodeRole == "validator" {
+		if nodeRole == "builder" {
+			for true{
+				handleEventsBuilder(cr, file, debug, nodeRole)
+			}
+		} else {
 			for true{
 				handleEventsValidator(cr, file, debug, nodeRole)
 			}
 		}
 
-		if nodeRole == "builder" {
-			for true{
-				handleEventsBuilder(cr, file, debug, nodeRole)
-			}
-		}
-
 	}()
-	
 	<-timer.C
+
+	//Calculate execution time
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime) //time in seconds
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	totalAllocBytes := memStats.TotalAlloc
+	cpuTime := time.Duration(totalAllocBytes)
+
+	averageCPULoad := int(math.Round(float64(cpuTime.Nanoseconds()) / float64(executionTime.Nanoseconds()) * 100))
+
+	cr.messageMetrics.WriteMessageGlobalCSV(averageCPULoad)
 	log.Printf("Timer expired, shutting down...\n")
+	
 	}
 
 func topicName(roomName string) string {

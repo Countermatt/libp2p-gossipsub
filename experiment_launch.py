@@ -4,7 +4,6 @@ import os
 import datetime
 import subprocess
 import time
-
 #Upload launch script to site frontend
 def execute_ssh_command(launch_script, login, site):
     # SSH command in the format 'ssh <username>@<hostname> "<command>"'
@@ -77,13 +76,14 @@ def main():
 
     #Experiment parameters
     nb_cluster_machine = 10 #Number of machine booked on the cluster
-    nb_experiment_node = 20 #Number of nodes running for the experiment
+    nb_experiment_node = 160 #Number of nodes running for the experiment
     nb_builder = 1
-    nb_validator = 18
+    nb_validator = 40
     nb_regular = nb_experiment_node - nb_builder - nb_validator
     exp_duration = 120  #In seconds
     experiment_name = "PANDAS"
-
+    current_datetime = datetime.datetime.now()
+    experiment_name += current_datetime.strftime("%Y-%m-%d-%H:%M:%S") 
     #Network parameters
     delay = "10%"
     rate = "1gbit"

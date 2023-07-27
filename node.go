@@ -17,6 +17,7 @@ import (
 
 const ChainBufSize = 1024
 const BlockSize = 512
+const NbSample = 75
 
 type TopicSubItem struct {
 	topic 		*pubsub.Topic
@@ -31,7 +32,7 @@ type Host struct {
 	topicsubList 	[]TopicSubItem
 	self     		peer.ID
 	nick     		string
-
+	messageMetrics	*MessageGlobalMetrics
 }
 
 func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, nodeType string) (*Host, error){
@@ -60,10 +61,29 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 		roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(row1))
 		roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(row2))
 
-	//Non validator
+	//Non validator subscribe to 75 random samples
 	default:
-	
+
+		sample := make([]int,0)
+		i := 0
+		for i < NbSample {
+			id := rand.Intn(BlockSize*BlockSize)
+			if(findElementInt(sample, id) == -1){
+				sample = append(sample, id)
+				column := id%BlockSize
+				row :=(id - column)/BlockSize
+				if findElementString(roomNameList, "builder:c" + strconv.Itoa(column)) == -1{
+					roomNameList = append(roomNameList, "builder:c" + strconv.Itoa(column))
+				}
+				if findElementString(roomNameList, "builder:r" + strconv.Itoa(row)) == -1{
+					roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(row))
+				}
+				i += 1
+			}
+		}
+
 	}
+	mesMetrics := InitMessageMetrics(nodeType, nickname)
 	h := &Host{
 		ctx:			ctx,
 		ps: 			ps,
@@ -72,6 +92,7 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 		self:     		selfID,
 		nick:     		nickname,
 		message: 		make(chan *Message, ChainBufSize),
+		messageMetrics:	mesMetrics,
 	}
 
 	for i := 0; i < len(roomNameList); i++ {
@@ -106,18 +127,15 @@ func (h *Host) AddSubTopic(roomName string) (error) {
 }
 
 // Publish sends a message to the pubsub topic.
-func (h *Host) Publish(message []byte, topic string) error {
-	m := Message{
-		Message:    message,
-		SenderID:   h.self.Pretty(),
-		SenderNick: h.nick,
-		Topic: 		topic,
-	}
+func (h *Host) Publish(message []byte, topic string, column int, row int) error {
+	m := CreateMessage(CreateSample(column, row), topic, h.self, h.nick)
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
+		h.messageMetrics.AddErrorSend()
 		return err
 	}
-	return h.topicsubList[findElement(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
+	h.messageMetrics.AddSend()
+	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
  /*
 func (h *Host) ListPeers() []peer.ID {
@@ -126,9 +144,10 @@ func (h *Host) ListPeers() []peer.ID {
 */
 func (h *Host) readLoop(topic string) {
 	for {
-		msg, err := h.topicsubList[findElement(h.topicNames, topic)].sub.Next(h.ctx)
+		msg, err := h.topicsubList[findElementString(h.topicNames, topic)].sub.Next(h.ctx)
 		if err != nil {
 			close(h.message)
+			h.messageMetrics.AddErrorReceived()
 			return
 		}
 		// only forward messages delivered by others
@@ -138,9 +157,11 @@ func (h *Host) readLoop(topic string) {
 		cm := new(Message)
 		err = json.Unmarshal(msg.Data, cm)
 		if err != nil {
+			h.messageMetrics.AddErrorReceived()
 			continue
 		}
 		// send valid messages onto the Messages channel
+		h.messageMetrics.AddReceived()
 		h.message <- cm
 
 	}
@@ -158,7 +179,6 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 		select {
 		//========== Receive Message ==========
 		case m := <-cr.message:
-			if nodeRole != "builder" {
 				// when we receive a message, print it to the message window
 				timestamp := time.Now()
 				timeString := timestamp.Format("2006-01-02 15:04:05")
@@ -174,7 +194,6 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 				if debugMode {
 					fmt.Println(timestamp, " / ", m.Topic, " / ",m.SenderID, " / ", m.Message)
 				}
-			}
 		}
 	}
 }
@@ -184,29 +203,35 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 	defer peerRefreshTicker.Stop()
 	writer := csv.NewWriter(file)
 	topic := "test1"
-	row_column_id := 0
+	row_id := 0
+	column_id := 0
 
 
 	for{
-		if row_column_id == BlockSize{
-			row_column_id = 0
+		if column_id == BlockSize{
+			column_id = 0
+			row_id += 1
+		}
+
+		if row_id == BlockSize{
+			row_id += 0
 		}
 		//send sample to column topic
-		topic = "builder:c" + strconv.Itoa(row_column_id)
+		topic = "builder:c" + strconv.Itoa(column_id)
 		fmt.Println("BLOCK:test User:",cr.nick," Topic:", topic)
-		err := cr.Publish([]byte(strconv.Itoa(row_column_id)), topic)
+		err := cr.Publish([]byte(strconv.Itoa(column_id)), topic, column_id, row_id)
 		if err != nil {
 			fmt.Println("publish error: %s", err)
 		}
 		//send sample to row topic
-		topic = "builder:r" + strconv.Itoa(row_column_id)
+		topic = "builder:r" + strconv.Itoa(row_id)
 		fmt.Println("BLOCK:test User:",cr.nick," Topic:", topic)
-		err = cr.Publish([]byte(strconv.Itoa(row_column_id)), topic)
+		err = cr.Publish([]byte(strconv.Itoa(row_id)), topic, column_id, row_id)
 		if err != nil {
 			fmt.Println("publish error: %s", err)
 		}
-
-		row_column_id += 1		
+		
+		column_id += 1		
 													
 		timestamp := time.Now()
 		timeString := timestamp.Format("2006-01-02 15:04:05")
@@ -226,7 +251,16 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 
 
 //========== Util Function ==========
-func findElement(list []string, target string) int {
+func findElementString(list []string, target string) int {
+    for index, value := range list {
+        if value == target {
+            return index // Found the element, return its index
+        }
+    }
+    return -1 // Element not found, return -1
+}
+
+func findElementInt(list []int, target int) int {
     for index, value := range list {
         if value == target {
             return index // Found the element, return its index

@@ -9,7 +9,7 @@ builder=$3
 validator=$4
 regular=$5
 login=$6
-experiment_folder="/home/$login/$experiment_name-$(date +%d-%m-%y-%H-%M)"
+experiment_folder="/home/$login/$experiment_name"
 
 # ========== Prerequisites Install ==========
 rm OAR*
