@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 	"log"
-	"runtime"
 	"math"
 
 	"github.com/libp2p/go-libp2p"
@@ -15,6 +14,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
+
+	"github.com/shirou/gopsutil/cpu"
 )
 
 // DiscoveryInterval is how often we re-publish our mDNS records.
@@ -84,7 +85,7 @@ func main() {
 	
 	//Start time for load metrics
 	startTime := time.Now()
-	
+	initialTimes, err := cpu.Times(false)
 	go func() {
 		if nodeRole == "builder" {
 			for true{
@@ -101,13 +102,16 @@ func main() {
 
 	//Calculate execution time
 	endTime := time.Now()
-	executionTime := endTime.Sub(startTime) //time in seconds
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-	totalAllocBytes := memStats.TotalAlloc
-	cpuTime := time.Duration(totalAllocBytes)
+	finalTimes, err := cpu.Times(false)
 
-	averageCPULoad := int(math.Round(float64(cpuTime.Nanoseconds()) / float64(executionTime.Nanoseconds()) * 100))
+	executionTime := endTime.Sub(startTime) //time in seconds
+
+	totalCPUUsage := 0.0
+	for i := range initialTimes {
+		totalCPUUsage += finalTimes[i].Total() - initialTimes[i].Total()
+	}
+
+	averageCPULoad := int(math.Round(totalCPUUsage / float64(executionTime.Seconds()) * 100))
 
 	cr.messageMetrics.WriteMessageGlobalCSV(averageCPULoad)
 	log.Printf("Timer expired, shutting down...\n")
