@@ -29,7 +29,7 @@ func main() {
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
-    flag.IntVar(&duration, "duration", 15, "Experiment duration (in seconds).")
+    flag.IntVar(&duration, "duration", 30, "Experiment duration (in seconds).")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -62,11 +62,9 @@ func main() {
 	// Generate a random nickname for node
 	nick := defaultNick(h.ID())
 	// join the room from the cli flag, or the flag default
-	room := []string{"test"}
 
 	// join the chat room
-	//h, err := JoinChain(ctx, ps, h.ID(), nick, room, sizeBlock)
-	cr, err := CreateHost(ctx, ps, h.ID(), nick, room)
+	cr, err := CreateHost(ctx, ps, h.ID(), nick, nodeRole)
 	if err != nil {
 		panic(err)
 	}
@@ -79,45 +77,55 @@ func main() {
 	defer file.Close()
 	
 	timer := time.NewTimer(time.Duration(duration) * time.Second)
-	
+	time.Sleep(1 * time.Second)
 	go func() {
-		for true{
-			handleEvents(cr, file, debug, nodeRole)
+
+		if nodeRole == "validator" {
+			for true{
+				handleEventsValidator(cr, file, debug, nodeRole)
+			}
 		}
+
+		if nodeRole == "builder" {
+			for true{
+				handleEventsBuilder(cr, file, debug, nodeRole)
+			}
+		}
+
 	}()
 	
 	<-timer.C
 	log.Printf("Timer expired, shutting down...\n")
 	}
 
-	func topicName(roomName string) string {
-		return "chat-room:" + roomName
-	}
+func topicName(roomName string) string {
+	return "chat-room:" + roomName
+}
 
-	func defaultNick(p peer.ID) string {
-		return fmt.Sprintf("%s-%s", os.Getenv("USER"), shortID(p))
-	}
+func defaultNick(p peer.ID) string {
+	return fmt.Sprintf("%s-%s", os.Getenv("USER"), shortID(p))
+}
+
+func setupDiscovery(h host.Host) error {
+	// setup mDNS discovery to find local peers
+	s := mdns.NewMdnsService(h, DiscoveryServiceTag, &discoveryNotifee{h: h})
+	return s.Start()
+}
+
+func shortID(p peer.ID) string {
+	pretty := p.Pretty()
+	return pretty[len(pretty)-8:]
+}
 	
-	func setupDiscovery(h host.Host) error {
-		// setup mDNS discovery to find local peers
-		s := mdns.NewMdnsService(h, DiscoveryServiceTag, &discoveryNotifee{h: h})
-		return s.Start()
-	}
+// discoveryNotifee gets notified when we find a new peer via mDNS discovery
+type discoveryNotifee struct {
+	h host.Host
+}
 
-	func shortID(p peer.ID) string {
-		pretty := p.Pretty()
-		return pretty[len(pretty)-8:]
+func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
+	fmt.Printf("discovered new peer %s\n", pi.ID.Pretty())
+	err := n.h.Connect(context.Background(), pi)
+	if err != nil {
+		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
 	}
-	
-	// discoveryNotifee gets notified when we find a new peer via mDNS discovery
-	type discoveryNotifee struct {
-		h host.Host
-	}
-
-	func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
-		fmt.Printf("discovered new peer %s\n", pi.ID.Pretty())
-		err := n.h.Connect(context.Background(), pi)
-		if err != nil {
-			fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
-		}
-	}
+}

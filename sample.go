@@ -11,6 +11,7 @@ type Message struct {
 	Message    []byte
 	SenderID   string
 	SenderNick string
+	Topic 	   string
 }
 
 //Sample struct
