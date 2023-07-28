@@ -54,8 +54,8 @@ func (m *MessageGlobalMetrics) WriteMessageGlobalCSV() {
 
 	writer := csv.NewWriter(file)
 	data := [][]string{
-		{"# Message send", "# Send error", "# Message received", "# Received error", "Average cpu load"},
-		{strconv.Itoa(m.numberSend), strconv.Itoa(m.errorSend), strconv.Itoa(m.numberReceived), strconv.Itoa(m.errorReceived), strconv.Itoa(cpuLoad)},
+		{"# Message send", "# Send error", "# Message received", "# Received error"},
+		{strconv.Itoa(m.numberSend), strconv.Itoa(m.errorSend), strconv.Itoa(m.numberReceived), strconv.Itoa(m.errorReceived)},
 	}
 	err = writer.WriteAll(data)
 	if err != nil {
