@@ -12,8 +12,6 @@ login=$6
 experiment_folder="/home/$login/$experiment_name"
 metrics_file= "$(hostname)-log"
 # ========== Prerequisites Install ==========
-rm OAR*
-rm oar*
 
 # Install experiment on the grid5000 node for better disk usage
 cd /tmp
@@ -32,7 +30,7 @@ go build
 
 sudo-g5k systemctl start sysstat
 mkdir "$experiment_folder"
-sar -u 1 $experiment_duration > $(hostname)-log.txt &
+sar -A 1 $experiment_duration > $(hostname)-log.txt &
 
 # ========== Experiment Launch ==========
 # Run builder
@@ -73,3 +71,4 @@ fi
 
 mkdir "$experiment_folder"
 cp *.csv $experiment_folder
+cp *.txt $experiment_folder

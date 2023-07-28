@@ -76,9 +76,9 @@ def main():
 
     #Experiment parameters
     nb_cluster_machine = 10 #Number of machine booked on the cluster
-    nb_experiment_node = 160 #Number of nodes running for the experiment
+    nb_experiment_node = 320 #Number of nodes running for the experiment
     nb_builder = 1
-    nb_validator = 40
+    nb_validator = 32*4
     nb_regular = nb_experiment_node - nb_builder - nb_validator
     exp_duration = 60  #In seconds
     experiment_name = "PANDAS"
