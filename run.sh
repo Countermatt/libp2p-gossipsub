@@ -30,7 +30,7 @@ go build
 
 sudo-g5k systemctl start sysstat
 mkdir "$experiment_folder"
-sar -A 1 $experiment_duration > $(hostname)-log.txt &
+sar -A 1 $experiment_duration > $(hostname)-log &
 
 # ========== Experiment Launch ==========
 # Run builder
