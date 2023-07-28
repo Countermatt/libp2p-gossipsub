@@ -67,7 +67,7 @@ def main():
     #Grid5000 parameters
     login = "mapigaglio" #Grid5000 login
     site = "nancy" #Grid5000 Site See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
-    cluster = "grisou" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
+    cluster = "gros" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
     job_name = "PANDAS"
 
     #Node launch script path
@@ -75,12 +75,12 @@ def main():
     launch_script = dir_path +"/" + "run.sh"
 
     #Experiment parameters
-    nb_cluster_machine = 1 #Number of machine booked on the cluster
-    nb_experiment_node = 10 #Number of nodes running for the experiment
+    nb_cluster_machine = 10 #Number of machine booked on the cluster
+    nb_experiment_node = 160 #Number of nodes running for the experiment
     nb_builder = 1
-    nb_validator = 8
+    nb_validator = 40
     nb_regular = nb_experiment_node - nb_builder - nb_validator
-    exp_duration = 20  #In seconds
+    exp_duration = 60  #In seconds
     experiment_name = "PANDAS"
     current_datetime = datetime.datetime.now()
     experiment_name += current_datetime.strftime("%Y-%m-%d-%H:%M:%S") 
@@ -102,7 +102,7 @@ def main():
     network = en.G5kNetworkConf(type="prod", roles=["experiment_network"], site=site)
     Job_walltime = seconds_to_hh_mm_ss(exp_duration + 120)
     conf = (
-        en.G5kConf.from_settings(job_name=job_name, walltime=Job_walltime)
+        en.G5kConf.from_settings(job_name=job_name, walltime="00:10:00")
         .add_network_conf(network)
         .add_machine(roles=["experiment"], cluster=cluster, nodes=nb_cluster_machine, primary_network=network) #Add experiment nodes
         .finalize()

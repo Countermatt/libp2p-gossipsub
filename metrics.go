@@ -44,7 +44,7 @@ func (m *MessageGlobalMetrics) AddErrorReceived() {
 	m.errorReceived += 1
 }
 
-func (m *MessageGlobalMetrics) WriteMessageGlobalCSV(cpuLoad int) {
+func (m *MessageGlobalMetrics) WriteMessageGlobalCSV() {
 
 	file, err := os.Create(m.fileName)
 	if err != nil {

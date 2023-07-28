@@ -84,8 +84,6 @@ func main() {
 	time.Sleep(1 * time.Second)
 	
 	//Start time for load metrics
-	startTime := time.Now()
-	initialTimes, err := cpu.Percent(false)
 	go func() {
 		if nodeRole == "builder" {
 			for true{
@@ -99,21 +97,7 @@ func main() {
 
 	}()
 	<-timer.C
-
-	//Calculate execution time
-	endTime := time.Now()
-	finalTimes, err := cpu.Percent(false)
-
-	executionTime := endTime.Sub(startTime) //time in seconds
-
-	totalCPUUsage := 0.0
-	for i := range initialTimes {
-		totalCPUUsage += finalTimes[i].Total() - initialTimes[i].Total()
-	}
-
-	averageCPULoad := int(math.Round(totalCPUUsage / float64(executionTime.Seconds())) * 100)
-
-	cr.messageMetrics.WriteMessageGlobalCSV(averageCPULoad)
+	cr.messageMetrics.WriteMessageGlobalCSV()
 	log.Printf("Timer expired, shutting down...\n")
 	
 	}
