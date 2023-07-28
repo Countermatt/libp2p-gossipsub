@@ -31,6 +31,7 @@ go build
 # ========== Metrics Gathering Launch ==========
 
 sudo-g5k systemctl start sysstat
+mkdir "$experiment_folder"
 sar -u 1 $experiment_duration > $experiment_folder/$(hostname)-log.txt &
 
 # ========== Experiment Launch ==========
