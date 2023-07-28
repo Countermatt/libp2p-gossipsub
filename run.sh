@@ -10,7 +10,7 @@ validator=$4
 regular=$5
 login=$6
 experiment_folder="/home/$login/$experiment_name"
-
+metrics_file= "$(hostname)-log"
 # ========== Prerequisites Install ==========
 rm OAR*
 rm oar*
@@ -27,8 +27,13 @@ export PATH=$PATH:/usr/local/go/bin
 git clone https://github.com/Countermatt/libp2p-gossipsub.git
 cd libp2p-gossipsub
 go build 
-# ========== Experiment Launch ==========
 
+# ========== Metrics Gathering Launch ==========
+
+sudo-g5k systemctl start sysstat
+sar -A -o sar_logs 1 30 >/dev/null 2> $metrics_file &
+
+# ========== Experiment Launch ==========
 # Run builder
 if [ "$builder" -ne 0 ]; then
     for ((i=0; i<$builder-1; i++)); do

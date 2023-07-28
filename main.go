@@ -32,7 +32,7 @@ func main() {
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
-    flag.IntVar(&duration, "duration", 5, "Experiment duration (in seconds).")
+    flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -85,7 +85,7 @@ func main() {
 	
 	//Start time for load metrics
 	startTime := time.Now()
-	initialTimes, err := cpu.Times(false)
+	initialTimes, err := cpu.Percent(false)
 	go func() {
 		if nodeRole == "builder" {
 			for true{
@@ -102,7 +102,7 @@ func main() {
 
 	//Calculate execution time
 	endTime := time.Now()
-	finalTimes, err := cpu.Times(false)
+	finalTimes, err := cpu.Percent(false)
 
 	executionTime := endTime.Sub(startTime) //time in seconds
 
@@ -111,7 +111,7 @@ func main() {
 		totalCPUUsage += finalTimes[i].Total() - initialTimes[i].Total()
 	}
 
-	averageCPULoad := int(math.Round(totalCPUUsage / float64(executionTime.Seconds()) * 100))
+	averageCPULoad := int(math.Round(totalCPUUsage / float64(executionTime.Seconds())) * 100)
 
 	cr.messageMetrics.WriteMessageGlobalCSV(averageCPULoad)
 	log.Printf("Timer expired, shutting down...\n")

@@ -75,16 +75,16 @@ def main():
     launch_script = dir_path +"/" + "run.sh"
 
     #Experiment parameters
-    nb_cluster_machine = 10 #Number of machine booked on the cluster
-    nb_experiment_node = 160 #Number of nodes running for the experiment
+    nb_cluster_machine = 1 #Number of machine booked on the cluster
+    nb_experiment_node = 10 #Number of nodes running for the experiment
     nb_builder = 1
-    nb_validator = 40
+    nb_validator = 8
     nb_regular = nb_experiment_node - nb_builder - nb_validator
-    exp_duration = 120  #In seconds
+    exp_duration = 20  #In seconds
     experiment_name = "PANDAS"
     current_datetime = datetime.datetime.now()
     experiment_name += current_datetime.strftime("%Y-%m-%d-%H:%M:%S") 
-    #Network parameters
+    #Network parameters 
     delay = "10%"
     rate = "1gbit"
     loss = "0%"
