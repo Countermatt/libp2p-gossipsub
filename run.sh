@@ -31,7 +31,7 @@ go build
 # ========== Metrics Gathering Launch ==========
 
 sudo-g5k systemctl start sysstat
-sar -A -o sar_logs 1 30 >/dev/null 2> $metrics_file &
+sar -A 1  $experiment_duration > $experiment_folder$(hostname)-log.txt &
 
 # ========== Experiment Launch ==========
 # Run builder
