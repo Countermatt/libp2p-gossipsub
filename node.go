@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"time"
-	"fmt"
 	"encoding/csv"
+	"encoding/json"
+	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
-	"math/rand"
+	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 const ChainBufSize = 1024
@@ -20,22 +20,22 @@ const BlockSize = 512
 const NbSample = 75
 
 type TopicSubItem struct {
-	topic 		*pubsub.Topic
-	sub 		*pubsub.Subscription
+	topic *pubsub.Topic
+	sub   *pubsub.Subscription
 }
 
 type Host struct {
-	message 		chan *Message
-	ctx 			context.Context
-	ps 				*pubsub.PubSub
-	topicNames 		[]string
-	topicsubList 	[]TopicSubItem
-	self     		peer.ID
-	nick     		string
-	messageMetrics	*MessageGlobalMetrics
+	message        chan *Message
+	ctx            context.Context
+	ps             *pubsub.PubSub
+	topicNames     []string
+	topicsubList   []TopicSubItem
+	self           peer.ID
+	nick           string
+	messageMetrics *MessageGlobalMetrics
 }
 
-func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, nodeType string) (*Host, error){
+func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, nodeType string) (*Host, error) {
 
 	//========== Subscribe nodes to topics ==========
 	roomNameList := make([]string, 0)
@@ -46,8 +46,8 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 	//Subscribe builders to all row and column
 	case "builder":
 		for i := 0; i < BlockSize; i++ {
-			roomNameList = append(roomNameList, "builder:c" + strconv.Itoa(i))
-			roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(i))
+			roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(i))
+			roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(i))
 		}
 
 	//Subscribe validators to 2 random row and 2 random column
@@ -56,27 +56,27 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 		column2 := rand.Intn(BlockSize)
 		row1 := rand.Intn(BlockSize)
 		row2 := rand.Intn(BlockSize)
-		roomNameList = append(roomNameList, "builder:c" + strconv.Itoa(column1))
-		roomNameList = append(roomNameList, "builder:c" + strconv.Itoa(column2))
-		roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(row1))
-		roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(row2))
+		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column1))
+		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column2))
+		roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row1))
+		roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row2))
 
 	//Non validator subscribe to 75 random samples
 	default:
 
-		sample := make([]int,0)
+		sample := make([]int, 0)
 		i := 0
 		for i < NbSample {
-			id := rand.Intn(BlockSize*BlockSize)
-			if(findElementInt(sample, id) == -1){
+			id := rand.Intn(BlockSize * BlockSize)
+			if findElementInt(sample, id) == -1 {
 				sample = append(sample, id)
-				column := id%BlockSize
-				row :=(id - column)/BlockSize
-				if findElementString(roomNameList, "builder:c" + strconv.Itoa(column)) == -1{
-					roomNameList = append(roomNameList, "builder:c" + strconv.Itoa(column))
+				column := id % BlockSize
+				row := (id - column) / BlockSize
+				if findElementString(roomNameList, "builder:c"+strconv.Itoa(column)) == -1 {
+					roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column))
 				}
-				if findElementString(roomNameList, "builder:r" + strconv.Itoa(row)) == -1{
-					roomNameList = append(roomNameList, "builder:r" + strconv.Itoa(row))
+				if findElementString(roomNameList, "builder:r"+strconv.Itoa(row)) == -1 {
+					roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row))
 				}
 				i += 1
 			}
@@ -85,14 +85,14 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 	}
 	mesMetrics := InitMessageMetrics(nodeType, nickname)
 	h := &Host{
-		ctx:			ctx,
-		ps: 			ps,
-		topicNames: 	roomNameList,
-		topicsubList: 	make([]TopicSubItem, 0),
-		self:     		selfID,
-		nick:     		nickname,
-		message: 		make(chan *Message, ChainBufSize),
-		messageMetrics:	mesMetrics,
+		ctx:            ctx,
+		ps:             ps,
+		topicNames:     roomNameList,
+		topicsubList:   make([]TopicSubItem, 0),
+		self:           selfID,
+		nick:           nickname,
+		message:        make(chan *Message, ChainBufSize),
+		messageMetrics: mesMetrics,
 	}
 
 	for i := 0; i < len(roomNameList); i++ {
@@ -103,13 +103,13 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 	return h, nil
 }
 
-func (h *Host) AddSubTopic(roomName string) (error) {
+func (h *Host) AddSubTopic(roomName string) error {
 	// join the pubsub topic
 	topic, err := h.ps.Join(topicName(roomName))
 	if err != nil {
 		return err
 	}
-	
+
 	// and subscribe to it
 	sub, err := topic.Subscribe()
 	if err != nil {
@@ -117,8 +117,8 @@ func (h *Host) AddSubTopic(roomName string) (error) {
 	}
 
 	tsi := &TopicSubItem{
-		topic:		topic,
-		sub:		sub,
+		topic: topic,
+		sub:   sub,
 	}
 
 	h.topicsubList = append(h.topicsubList, *tsi)
@@ -127,8 +127,8 @@ func (h *Host) AddSubTopic(roomName string) (error) {
 }
 
 // Publish sends a message to the pubsub topic.
-func (h *Host) Publish(message []byte, topic string, column int, row int) error {
-	m := CreateMessage(CreateSample(column, row), topic, h.self, h.nick)
+func (h *Host) Publish(topic string, colRow int, first int, block int, size int) error {
+	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick)
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
 		h.messageMetrics.AddErrorSend()
@@ -137,10 +137,11 @@ func (h *Host) Publish(message []byte, topic string, column int, row int) error 
 	h.messageMetrics.AddSend()
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
- /*
-func (h *Host) ListPeers() []peer.ID {
-	return h.ps.ListPeers(topicName(h.roomName))
-}
+
+/*
+	func (h *Host) ListPeers() []peer.ID {
+		return h.ps.ListPeers(topicName(h.roomName))
+	}
 */
 func (h *Host) readLoop(topic string) {
 	for {
@@ -171,100 +172,122 @@ func (h *Host) readLoop(topic string) {
 //========== Handle Events ==========
 //===================================
 
-
-//This function handle message communication, process incomming message and send message for validator
+// This function handle message communication, process incomming message and send message for validator
 func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole string) {
 	writer := csv.NewWriter(file)
 	for {
 		select {
 		//========== Receive Message ==========
 		case m := <-cr.message:
-				// when we receive a message, print it to the message window
-				timestamp := time.Now()
-				timeString := timestamp.Format("2006-01-02 15:04:05")
-				data := []string{timeString , "Received:", m.SenderID, "Topic:", m.Topic}
-				err := writer.Write(data)
-				if err != nil {
-					log.Fatal("Error writing CSV:", err)
-				}
-				writer.Flush()
-				if err := writer.Error(); err != nil {
-					log.Fatal("Error flushing CSV writer:", err)
-				}
-				if debugMode {
-					fmt.Println(timestamp, " / ", m.Topic, " / ",m.SenderID, " / ", m.Message)
-				}
+			// when we receive a message, print it to the message window
+			timestamp := time.Now()
+			timeString := timestamp.Format("2006-01-02 15:04:05")
+			data := []string{timeString, "Received:", m.SenderID, "Topic:", m.Topic}
+			err := writer.Write(data)
+			if err != nil {
+				log.Fatal("Error writing CSV:", err)
+			}
+			writer.Flush()
+			if err := writer.Error(); err != nil {
+				log.Fatal("Error flushing CSV writer:", err)
+			}
+			if debugMode {
+				fmt.Println(timestamp, " / ", m.Topic, " / ", m.SenderID, " / ", m.Message)
+			}
 		}
 	}
 }
 
-func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole string) {
-	peerRefreshTicker := time.NewTicker( 1 * time.Millisecond)
+func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int) {
+	peerRefreshTicker := time.NewTicker(1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
 	writer := csv.NewWriter(file)
-	topic := "test1"
-	row_id := 0
-	column_id := 0
-
-
-	for{
-		if column_id == BlockSize{
-			column_id = 0
-			row_id += 1
-		}
-
-		if row_id == BlockSize{
-			row_id += 0
+	row_sample_list := idListRow(sizeParcel, sizeBlock)
+	col_sample_list := idListCol(sizeParcel, sizeBlock)
+	id := 0
+	block := 0
+	for {
+		if id == len(col_sample_list) {
+			id = 0
+			block += 1
 		}
 		//send sample to column topic
-		topic = "builder:c" + strconv.Itoa(column_id)
-		fmt.Println("BLOCK:test User:",cr.nick," Topic:", topic)
-		err := cr.Publish([]byte(strconv.Itoa(column_id)), topic, column_id, row_id)
+		topic := "builder:c" + strconv.Itoa(col_sample_list[id]%sizeBlock)
+		fmt.Println("BLOCK:", block, "Col Id:", len(col_sample_list), " Topic:", topic)
+		err := cr.Publish(topic, 0, id, block, sizeBlock)
 		if err != nil {
 			fmt.Println("publish error: %s", err)
 		}
 		//send sample to row topic
-		topic = "builder:r" + strconv.Itoa(row_id)
-		fmt.Println("BLOCK:test User:",cr.nick," Topic:", topic)
-		err = cr.Publish([]byte(strconv.Itoa(row_id)), topic, column_id, row_id)
+		topic = "builder:r" + strconv.Itoa((row_sample_list[id]-(row_sample_list[id]%sizeBlock))/sizeBlock)
+		fmt.Println("BLOCK:", block, "Row Id:", len(col_sample_list))
+		err = cr.Publish(topic, 1, id, block, sizeBlock)
 		if err != nil {
 			fmt.Println("publish error: %s", err)
 		}
-		
-		column_id += 1		
-													
+
 		timestamp := time.Now()
 		timeString := timestamp.Format("2006-01-02 15:04:05")
-		data := []string{timeString , "PUT", strconv.Itoa(0), strconv.Itoa(0), strconv.Itoa(0), cr.nick, topic}
+		data := []string{timeString, "PUT", strconv.Itoa(0), strconv.Itoa(0), strconv.Itoa(0), cr.nick, topic}
 
 		err = writer.Write(data)
 		if err != nil {
 			log.Fatal("Error writing CSV:", err)
 		}
-								
+
 		writer.Flush()
 		if err := writer.Error(); err != nil {
 			log.Fatal("Error flushing CSV writer:", err)
 		}
+
+		id += 1
+
 	}
 }
 
-
-//========== Util Function ==========
+// ========== Util Function ==========
 func findElementString(list []string, target string) int {
-    for index, value := range list {
-        if value == target {
-            return index // Found the element, return its index
-        }
-    }
-    return -1 // Element not found, return -1
+	for index, value := range list {
+		if value == target {
+			return index // Found the element, return its index
+		}
+	}
+	return -1 // Element not found, return -1
 }
 
 func findElementInt(list []int, target int) int {
-    for index, value := range list {
-        if value == target {
-            return index // Found the element, return its index
-        }
-    }
-    return -1 // Element not found, return -1
+	for index, value := range list {
+		if value == target {
+			return index // Found the element, return its index
+		}
+	}
+	return -1 // Element not found, return -1
+}
+
+func idListRow(sizeParcel int, sizeBlock int) []int {
+	var result []int
+	id := 0
+	for id < sizeBlock*sizeBlock {
+		result = append(result, id)
+		id += sizeParcel
+	}
+	return result
+}
+
+func idListCol(sizeParcel int, sizeBlock int) []int {
+	var result []int
+	id := 0
+	col := 0
+	row := 0
+	for id < sizeBlock*sizeBlock {
+		result = append(result, id)
+		for i := 0; i < sizeBlock; i++ {
+			if row == sizeBlock {
+				col += 1
+				row = 0
+			}
+			id = row*sizeBlock + col
+		}
+	}
+	return result
 }

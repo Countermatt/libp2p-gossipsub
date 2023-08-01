@@ -4,9 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"time"
-	"log"
 
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -20,6 +20,8 @@ const DiscoveryInterval = time.Hour
 
 // DiscoveryServiceTag is used in our mDNS advertisements to discover other chat peers.
 const DiscoveryServiceTag = "PANDAS-gossipsub-mDNS"
+const sizeBlock = 512
+const sizeParcel = 16
 
 func main() {
 
@@ -29,12 +31,11 @@ func main() {
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
-    flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
+	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
 	flag.Parse()
 
 	ctx := context.Background()
 	nodeRole := *nodeType
-
 	if debug {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")
 		log.Printf("\tNickName: %s\n", nickFlag)
@@ -58,7 +59,7 @@ func main() {
 	if err := setupDiscovery(h); err != nil {
 		panic(err)
 	}
-	
+
 	// Generate a random nickname for node
 	nick := defaultNick(h.ID())
 	// join the room from the cli flag, or the flag default
@@ -68,26 +69,25 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	//Create CSV file for logging
 	file, err := os.Create(nodeRole + "-" + nick + ".csv")
 	if err != nil {
 		log.Fatal("Error creating file:", err)
 	}
 	defer file.Close()
-	
 
 	timer := time.NewTimer(time.Duration(duration) * time.Second)
 	time.Sleep(1 * time.Second)
-	
+
 	//Start time for load metrics
 	go func() {
 		if nodeRole == "builder" {
-			for true{
-				handleEventsBuilder(cr, file, debug, nodeRole)
+			for true {
+				handleEventsBuilder(cr, file, debug, nodeRole, sizeParcel, sizeBlock)
 			}
 		} else {
-			for true{
+			for true {
 				handleEventsValidator(cr, file, debug, nodeRole)
 			}
 		}
@@ -96,8 +96,8 @@ func main() {
 	<-timer.C
 	cr.messageMetrics.WriteMessageGlobalCSV()
 	log.Printf("Timer expired, shutting down...\n")
-	
-	}
+
+}
 
 func topicName(roomName string) string {
 	return "chat-room:" + roomName
@@ -117,7 +117,7 @@ func shortID(p peer.ID) string {
 	pretty := p.Pretty()
 	return pretty[len(pretty)-8:]
 }
-	
+
 // discoveryNotifee gets notified when we find a new peer via mDNS discovery
 type discoveryNotifee struct {
 	h host.Host
