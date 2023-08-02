@@ -42,9 +42,10 @@ def seconds_to_hh_mm_ss(seconds):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 #Experiment node partition between Grid5000 machine
-def node_partition(nb_cluster_machine, nb_builder, nb_validator, nb_regular):
+def node_partition(nb_cluster_machine, network_size, nb_builder, prop_validator):
     partition = [[0, 0, 0] for i in range(nb_cluster_machine)]
-
+    nb_validator = int(network_size*prop_validator)
+    nb_regular = network_size - nb_validator - nb_builder
     index = 0
     while nb_builder > 0 or nb_validator > 0 or nb_regular > 0:
         if index == len(partition):
@@ -75,12 +76,16 @@ def main():
     launch_script = dir_path +"/" + "run.sh"
 
     #Experiment parameters
+    parcel_size_list = [16, 32, 64, 128, 256]
+    network_size_list = [50, 500, 1000]
+
+    k = 0
+    nb_expe = network_size_list*parcel_size_list
     nb_cluster_machine = 10 #Number of machine booked on the cluster
-    nb_experiment_node = 320 #Number of nodes running for the experiment
+    nb_experiment_node = 1000 #Number of nodes running for the experiment
     nb_builder = 1
-    nb_validator = 32*4
-    nb_regular = nb_experiment_node - nb_builder - nb_validator
-    exp_duration = 60  #In seconds
+    prop_validator = 0.20
+    exp_duration = 180  #In seconds
     experiment_name = "PANDAS"
     current_datetime = datetime.datetime.now()
     experiment_name += current_datetime.strftime("%Y-%m-%d-%H:%M:%S") 
@@ -91,11 +96,7 @@ def main():
     loss = "0%"
     symmetric=True
 
-
-    #========== Experiment nodes partition on cluster machines ==========
-    partition = node_partition(nb_cluster_machine, nb_builder, nb_validator, nb_regular)
-
-
+    walltime_in_s = (exp_duration+10)*nb_expe
     #========== Create and validate Grid5000 and network emulation configurations ==========
     #Log to Grid5000 and check connection
     en.init_logging(level=logging.INFO)
@@ -103,7 +104,7 @@ def main():
     network = en.G5kNetworkConf(type="prod", roles=["experiment_network"], site=site)
     Job_walltime = seconds_to_hh_mm_ss(exp_duration + 120)
     conf = (
-        en.G5kConf.from_settings(job_name=job_name, walltime="00:10:00")
+        en.G5kConf.from_settings(job_name=job_name, walltime= seconds_to_hh_mm_ss(walltime_in_s))
         .add_network_conf(network)
         .add_machine(roles=["experiment"], cluster=cluster, nodes=nb_cluster_machine, primary_network=network) #Add experiment nodes
         .finalize()
@@ -138,21 +139,26 @@ def main():
     #========== Deploy Experiment ==========
     #Send launch script to Grid5000 site frontend
     execute_ssh_command(launch_script, login, site)
-    i = 0
-    for x in roles["experiment"]:
-        with en.actions(roles=x, on_error_continue=True, background=True) as p:
-            builder, validator, regular = partition[i]
-            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {size_parcel}")
-            i += 1
 
+    for network_size in network_size_list:
+        partition = node_partition(nb_cluster_machine, network_size, nb_builder, prop_validator)
+        for parcel_size in parcel_size_list:
+            i = 0
+            for x in roles["experiment"]:
+                with en.actions(roles=x, on_error_continue=True, background=True) as p:
+                    builder, validator, regular = partition[i]
+                    p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
+                    i += 1
+            
+            h,m,s = convert_seconds_to_time(exp_duration)
+            print("Experiment :",k,"/",nb_expe," Begin at: ",start)
+            print("Expected to finish at: ",add_time(start,h,m,s + 10))
+            time.sleep(exp_duration + 10)
+            k +=1
     start = datetime.datetime.now() #Timestamp grid5000 job start
 
     #========== Wait job and and release grid5000 ressources ==========
-    #Print experiment duration
-    h,m,s = convert_seconds_to_time(exp_duration)
-    print("Begin at: ",start)
-    print("Expected to finish at: ",add_time(start,h,m,s + 10))
-    time.sleep(exp_duration + 20)
+
 
     #Release all Grid'5000 resources
     netem.destroy()

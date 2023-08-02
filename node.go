@@ -175,9 +175,9 @@ func (h *Host) readLoop(topic string) {
 func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
 	writer := csv.NewWriter(file)
 	block := 0
-
+	nb_id := sizeBlock * 4 / sizeParcel
+	id := 0
 	data := []string{"TimeStamp", "Block", "Id", "Topic"}
-
 	err := writer.Write(data)
 	if err != nil {
 		log.Fatal("Error writing CSV:", err)
@@ -191,6 +191,10 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 		select {
 		//========== Receive Message ==========
 		case m := <-cr.message:
+			if id == nb_id {
+				block += 1
+			}
+
 			// when we receive a message, print it to the message window
 			data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), m.Id, m.Topic}
 
@@ -203,12 +207,13 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 				log.Fatal("Error flushing CSV writer:", err)
 			}
 			if debugMode {
-				fmt.Println(time.Now(), "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+				fmt.Println(time.Now(), "/ BLOCK:", block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 
 				if err != nil {
 					fmt.Println("publish error: %s", err)
 				}
 			}
+			id += 1
 		}
 	}
 }
@@ -239,51 +244,47 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 			block += 1
 		}
 
-		if colRow == 0 {
-			//send sample to column topic
-			topic := "builder:c" + strconv.Itoa(id%sizeBlock)
-			err := cr.Publish(topic, 0, id, block, sizeBlock)
-			if debugMode {
-				fmt.Println(time.Now(), "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
-				if err != nil {
-					fmt.Println("publish error: %s", err)
-				}
-			}
-			data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(col_sample_list)), topic}
-
-			err = writer.Write(data)
+		//send sample to column topic
+		topic := "builder:c" + strconv.Itoa(id%sizeBlock)
+		err := cr.Publish(topic, 0, id, block, sizeBlock)
+		if debugMode {
+			fmt.Println(time.Now(), "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
 			if err != nil {
-				log.Fatal("Error writing CSV:", err)
-			}
-
-			writer.Flush()
-			if err := writer.Error(); err != nil {
-				log.Fatal("Error flushing CSV writer:", err)
+				fmt.Println("publish error: %s", err)
 			}
 		}
+		data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(col_sample_list)), topic}
 
-		if colRow == 1 {
-			//send sample to row topic
-			topic := "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
-			if debugMode {
-				fmt.Println(time.Now(), "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+		err = writer.Write(data)
+		if err != nil {
+			log.Fatal("Error writing CSV:", err)
+		}
 
-				if err != nil {
-					fmt.Println("publish error: %s", err)
-				}
-			}
-			data = []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(row_sample_list)), topic}
-			err = cr.Publish(topic, 1, id, block, sizeBlock)
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			log.Fatal("Error flushing CSV writer:", err)
+		}
 
-			err = writer.Write(data)
+		//send sample to row topic
+		topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
+		if debugMode {
+			fmt.Println(time.Now(), "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+
 			if err != nil {
-				log.Fatal("Error writing CSV:", err)
+				fmt.Println("publish error: %s", err)
 			}
+		}
+		data = []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(row_sample_list)), topic}
+		err = cr.Publish(topic, 1, id, block, sizeBlock)
 
-			writer.Flush()
-			if err := writer.Error(); err != nil {
-				log.Fatal("Error flushing CSV writer:", err)
-			}
+		err = writer.Write(data)
+		if err != nil {
+			log.Fatal("Error writing CSV:", err)
+		}
+
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			log.Fatal("Error flushing CSV writer:", err)
 		}
 		id += 1
 
