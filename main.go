@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -21,7 +22,7 @@ const DiscoveryInterval = time.Hour
 // DiscoveryServiceTag is used in our mDNS advertisements to discover other chat peers.
 const DiscoveryServiceTag = "PANDAS-gossipsub-mDNS"
 const sizeBlock = 512
-const sizeParcel = 16
+
 const colRow = 0 // 0 for column and 1 for Row parcels
 func main() {
 
@@ -30,12 +31,14 @@ func main() {
 	var debug bool
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
+	parcelSize := flag.String("parcel", "16", "size parcel")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
 	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
-	flag.Parse()
 
+	flag.Parse()
 	ctx := context.Background()
 	nodeRole := *nodeType
+	sizeParcel, err := strconv.Atoi(*parcelSize)
 	if debug {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")
 		log.Printf("\tNickName: %s\n", nickFlag)

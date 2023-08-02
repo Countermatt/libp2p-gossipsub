@@ -4,13 +4,14 @@
 
 # ========== Parameters ==========
 experiment_duration=$1
-experiment_name=$2
+experiment_name=$2"_b"$3"_v"$4"_r"$5"_ps"$7
 builder=$3
 validator=$4
 regular=$5
 login=$6
 experiment_folder="/home/$login/$experiment_name"
 metrics_file= "$(hostname)-log"
+parcel_size=$7
 # ========== Prerequisites Install ==========
 
 # Install experiment on the grid5000 node for better disk usage
@@ -36,37 +37,37 @@ sar -A 1 $experiment_duration > $(hostname)-log &
 # Run builder
 if [ "$builder" -ne 0 ]; then
     for ((i=0; i<$builder-1; i++)); do
-        go run . -duration="$experiment_duration" -nodeType=builder &
+        go run . -duration="$experiment_duration" -nodeType=builder -parcelSize="$percel_size" &
     done
 
     if [ "$validator" == "0" ] && [ "$regular" == "0" ]; then
-        go run . -duration="$experiment_duration" -nodeType=builder
+        go run . -duration="$experiment_duration" -nodeType=builder -parcelSize="$percel_size"
     else
-        go run . -duration="$experiment_duration" -nodeType=builder &
+        go run . -duration="$experiment_duration" -nodeType=builder  -parcelSize="$percel_size" &
     fi
 fi
 
 # Run validator
 if [ "$validator" -ne "0" ]; then
     for ((i=0; i<$validator-1; i++)); do
-        go run . -duration="$experiment_duration" -nodeType=validator &
+        go run . -duration="$experiment_duration" -nodeType=validator -parcelSize="$percel_size" &
         sleep 0.1
     done
 
     if [ "$regular" == "0" ]; then
-        go run . -duration="$experiment_duration" -nodeType=validator
+        go run . -duration="$experiment_duration" -nodeType=validator -parcelSize="$percel_size"
     else
-        go run . -duration="$experiment_duration" -nodeType=validator &
+        go run . -duration="$experiment_duration" -nodeType=validator -parcelSize="$percel_size" &
     fi
 fi
 
 # Run other nodes
 if [ "$regular" -ne 0 ]; then
     for ((i=0; i<$regular-1; i++)); do
-        go run . -duration="$experiment_duration" -nodeType=nonvalidator &
+        go run . -duration="$experiment_duration" -nodeType=nonvalidator -parcelSize="$percel_size" &
         sleep 0.1
     done
-    go run . -duration="$experiment_duration" -nodeType=nonvalidator
+    go run . -duration="$experiment_duration" -nodeType=nonvalidator -parcelSize="$percel_size"
 fi
 
 mkdir "$experiment_folder"

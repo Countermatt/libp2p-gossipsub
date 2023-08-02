@@ -84,6 +84,7 @@ def main():
     experiment_name = "PANDAS"
     current_datetime = datetime.datetime.now()
     experiment_name += current_datetime.strftime("%Y-%m-%d-%H:%M:%S") 
+    size_parcel = 16
     #Network parameters 
     delay = "10%"
     rate = "1gbit"
@@ -141,7 +142,7 @@ def main():
     for x in roles["experiment"]:
         with en.actions(roles=x, on_error_continue=True, background=True) as p:
             builder, validator, regular = partition[i]
-            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login}")
+            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {size_parcel}")
             i += 1
 
     start = datetime.datetime.now() #Timestamp grid5000 job start
