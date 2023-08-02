@@ -1,30 +1,30 @@
 package main
 
 import (
-	"os"
 	"encoding/csv"
 	"log"
+	"os"
 	"strconv"
-
 )
 
 type MessageGlobalMetrics struct {
-	fileName string
-	numberSend int	
-	errorSend int
+	fileName       string
+	messaeLogFile  string
+	numberSend     int
+	errorSend      int
 	numberReceived int
-	errorReceived int
+	errorReceived  int
 }
 
-func InitMessageMetrics(nodeRole string, nick string) (*MessageGlobalMetrics) {
-
+func InitMessageMetrics(nodeRole string, nick string) *MessageGlobalMetrics {
 
 	m := &MessageGlobalMetrics{
-		fileName:			nodeRole + "-" + nick + "-MessageGlobal.csv",
-		numberSend: 		0,
-		errorSend:			0,
-		numberReceived: 	0,
-		errorReceived:		0,
+		fileName:       nodeRole + "-" + nick + "-MessageGlobal.csv",
+		messaeLogFile:  nodeRole + "-" + nick + "-MessageLog.csv",
+		numberSend:     0,
+		errorSend:      0,
+		numberReceived: 0,
+		errorReceived:  0,
 	}
 	return m
 }

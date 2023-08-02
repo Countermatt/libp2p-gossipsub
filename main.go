@@ -22,7 +22,7 @@ const DiscoveryInterval = time.Hour
 const DiscoveryServiceTag = "PANDAS-gossipsub-mDNS"
 const sizeBlock = 512
 const sizeParcel = 16
-
+const colRow = 0 // 0 for column and 1 for Row parcels
 func main() {
 
 	//========== Experiment arguments ==========
@@ -65,13 +65,13 @@ func main() {
 	// join the room from the cli flag, or the flag default
 
 	// join the chat room
-	cr, err := CreateHost(ctx, ps, h.ID(), nick, nodeRole)
+	cr, err := CreateHost(ctx, ps, h.ID(), nick, nodeRole, sizeBlock)
 	if err != nil {
 		panic(err)
 	}
 
 	//Create CSV file for logging
-	file, err := os.Create(nodeRole + "-" + nick + ".csv")
+	file, err := os.Create(cr.messageMetrics.messaeLogFile)
 	if err != nil {
 		log.Fatal("Error creating file:", err)
 	}
@@ -83,12 +83,13 @@ func main() {
 	//Start time for load metrics
 	go func() {
 		if nodeRole == "builder" {
-			for true {
-				handleEventsBuilder(cr, file, debug, nodeRole, sizeParcel, sizeBlock)
+			for {
+
+				handleEventsBuilder(cr, file, debug, nodeRole, sizeParcel, sizeBlock, colRow)
 			}
 		} else {
-			for true {
-				handleEventsValidator(cr, file, debug, nodeRole)
+			for {
+				handleEventsValidator(cr, file, debug, nodeRole, sizeParcel, sizeBlock, colRow)
 			}
 		}
 

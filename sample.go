@@ -8,7 +8,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
-const sampleLength = 42
+const sampleLength = 512
 
 // ========== Struct definition ==========
 type Message struct {
@@ -16,6 +16,8 @@ type Message struct {
 	SenderID   string
 	SenderNick string
 	Topic      string
+	Id         string
+	Block      string
 }
 
 // Sample struct
@@ -73,7 +75,7 @@ func (b *Block) AddSample(column int, row int, sample *Sample) {
 }
 */
 
-func CreateMessage(parcel *Parcel, topic string, sender peer.ID, nick string) *Message {
+func CreateMessage(parcel *Parcel, topic string, sender peer.ID, nick string, id int, block int) *Message {
 
 	message := make([]byte, 0)
 	message = append(message, []byte(strconv.Itoa(parcel.colRow))...)
@@ -86,6 +88,8 @@ func CreateMessage(parcel *Parcel, topic string, sender peer.ID, nick string) *M
 		SenderID:   sender.Pretty(),
 		SenderNick: nick,
 		Topic:      topic,
+		Id:         strconv.Itoa(id),
+		Block:      strconv.Itoa(block),
 	}
 
 	return m

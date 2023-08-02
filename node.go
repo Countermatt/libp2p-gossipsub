@@ -16,7 +16,6 @@ import (
 )
 
 const ChainBufSize = 1024
-const BlockSize = 512
 const NbSample = 75
 
 type TopicSubItem struct {
@@ -35,7 +34,7 @@ type Host struct {
 	messageMetrics *MessageGlobalMetrics
 }
 
-func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, nodeType string) (*Host, error) {
+func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, nodeType string, BlockSize int) (*Host, error) {
 
 	//========== Subscribe nodes to topics ==========
 	roomNameList := make([]string, 0)
@@ -128,7 +127,7 @@ func (h *Host) AddSubTopic(roomName string) error {
 
 // Publish sends a message to the pubsub topic.
 func (h *Host) Publish(topic string, colRow int, first int, block int, size int) error {
-	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick)
+	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick, first, block)
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
 		h.messageMetrics.AddErrorSend()
@@ -173,16 +172,28 @@ func (h *Host) readLoop(topic string) {
 //===================================
 
 // This function handle message communication, process incomming message and send message for validator
-func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole string) {
+func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
 	writer := csv.NewWriter(file)
+	block := 0
+
+	data := []string{"TimeStamp", "Block", "Id", "Topic"}
+
+	err := writer.Write(data)
+	if err != nil {
+		log.Fatal("Error writing CSV:", err)
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		log.Fatal("Error flushing CSV writer:", err)
+	}
+
 	for {
 		select {
 		//========== Receive Message ==========
 		case m := <-cr.message:
 			// when we receive a message, print it to the message window
-			timestamp := time.Now()
-			timeString := timestamp.Format("2006-01-02 15:04:05")
-			data := []string{timeString, "Received:", m.SenderID, "Topic:", m.Topic}
+			data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), m.Id, m.Topic}
+
 			err := writer.Write(data)
 			if err != nil {
 				log.Fatal("Error writing CSV:", err)
@@ -192,13 +203,17 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 				log.Fatal("Error flushing CSV writer:", err)
 			}
 			if debugMode {
-				fmt.Println(timestamp, " / ", m.Topic, " / ", m.SenderID, " / ", m.Message)
+				fmt.Println(time.Now(), "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+
+				if err != nil {
+					fmt.Println("publish error: %s", err)
+				}
 			}
 		}
 	}
 }
 
-func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int) {
+func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
 	peerRefreshTicker := time.NewTicker(1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
 	writer := csv.NewWriter(file)
@@ -206,40 +221,70 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 	col_sample_list := idListCol(sizeParcel, sizeBlock)
 	id := 0
 	block := 0
+
+	data := []string{"TimeStamp", "Block", "Id", "Sample col/row", "Topic"}
+
+	err := writer.Write(data)
+	if err != nil {
+		log.Fatal("Error writing CSV:", err)
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		log.Fatal("Error flushing CSV writer:", err)
+	}
+
 	for {
-		if id == len(col_sample_list) {
+		if id == len(row_sample_list) {
 			id = 0
 			block += 1
 		}
-		//send sample to column topic
-		topic := "builder:c" + strconv.Itoa(col_sample_list[id]%sizeBlock)
-		fmt.Println("BLOCK:", block, "Col Id:", len(col_sample_list), " Topic:", topic)
-		err := cr.Publish(topic, 0, id, block, sizeBlock)
-		if err != nil {
-			fmt.Println("publish error: %s", err)
-		}
-		//send sample to row topic
-		topic = "builder:r" + strconv.Itoa((row_sample_list[id]-(row_sample_list[id]%sizeBlock))/sizeBlock)
-		fmt.Println("BLOCK:", block, "Row Id:", len(col_sample_list))
-		err = cr.Publish(topic, 1, id, block, sizeBlock)
-		if err != nil {
-			fmt.Println("publish error: %s", err)
-		}
 
-		timestamp := time.Now()
-		timeString := timestamp.Format("2006-01-02 15:04:05")
-		data := []string{timeString, "PUT", strconv.Itoa(0), strconv.Itoa(0), strconv.Itoa(0), cr.nick, topic}
+		if colRow == 0 {
+			//send sample to column topic
+			topic := "builder:c" + strconv.Itoa(id%sizeBlock)
+			err := cr.Publish(topic, 0, id, block, sizeBlock)
+			if debugMode {
+				fmt.Println(time.Now(), "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
+				if err != nil {
+					fmt.Println("publish error: %s", err)
+				}
+			}
+			data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(col_sample_list)), topic}
 
-		err = writer.Write(data)
-		if err != nil {
-			log.Fatal("Error writing CSV:", err)
-		}
+			err = writer.Write(data)
+			if err != nil {
+				log.Fatal("Error writing CSV:", err)
+			}
 
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			log.Fatal("Error flushing CSV writer:", err)
+			writer.Flush()
+			if err := writer.Error(); err != nil {
+				log.Fatal("Error flushing CSV writer:", err)
+			}
 		}
 
+		if colRow == 1 {
+			//send sample to row topic
+			topic := "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
+			if debugMode {
+				fmt.Println(time.Now(), "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+
+				if err != nil {
+					fmt.Println("publish error: %s", err)
+				}
+			}
+			data = []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(row_sample_list)), topic}
+			err = cr.Publish(topic, 1, id, block, sizeBlock)
+
+			err = writer.Write(data)
+			if err != nil {
+				log.Fatal("Error writing CSV:", err)
+			}
+
+			writer.Flush()
+			if err := writer.Error(); err != nil {
+				log.Fatal("Error flushing CSV writer:", err)
+			}
+		}
 		id += 1
 
 	}
@@ -279,15 +324,16 @@ func idListCol(sizeParcel int, sizeBlock int) []int {
 	id := 0
 	col := 0
 	row := 0
-	for id < sizeBlock*sizeBlock {
+	for col < sizeBlock {
 		result = append(result, id)
-		for i := 0; i < sizeBlock; i++ {
+		for i := 0; i < sizeParcel; i++ {
+			row += 1
 			if row == sizeBlock {
 				col += 1
 				row = 0
 			}
-			id = row*sizeBlock + col
 		}
+		id = row*sizeBlock + col
 	}
 	return result
 }
