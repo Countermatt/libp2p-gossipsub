@@ -27,16 +27,18 @@ func main() {
 
 	//========== Experiment arguments ==========
 	var duration int
+	var size int
 	var debug bool
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
+	flag.IntVar(&size, "size", 128, "parcel size")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
 	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
 
 	flag.Parse()
 	ctx := context.Background()
 	nodeRole := *nodeType
-	sizeParcel := 64
+	log.Printf("Size:", size)
 	if debug {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")
 		log.Printf("\tNickName: %s\n", nickFlag)
@@ -86,11 +88,11 @@ func main() {
 		if nodeRole == "builder" {
 			for {
 
-				handleEventsBuilder(cr, file, debug, nodeRole, sizeParcel, sizeBlock, colRow)
+				handleEventsBuilder(cr, file, debug, nodeRole, size, sizeBlock, colRow)
 			}
 		} else {
 			for {
-				handleEventsValidator(cr, file, debug, nodeRole, sizeParcel, sizeBlock, colRow)
+				handleEventsValidator(cr, file, debug, nodeRole, size, sizeBlock, colRow)
 			}
 		}
 
