@@ -28,17 +28,15 @@ func main() {
 	//========== Experiment arguments ==========
 	var duration int
 	var debug bool
-	var parcelSize *int
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
-	flag.IntVar(parcelSize, "parcel", 16, "size parcel")
 	flag.BoolVar(&debug, "debug", true, "debug mode")
 	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
 
 	flag.Parse()
 	ctx := context.Background()
 	nodeRole := *nodeType
-	sizeParcel := *parcelSize
+	sizeParcel := 32
 	if debug {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")
 		log.Printf("\tNickName: %s\n", nickFlag)

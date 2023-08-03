@@ -175,6 +175,7 @@ func (h *Host) readLoop(topic string) {
 func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
 	writer := csv.NewWriter(file)
 	block := 0
+	print(sizeParcel)
 	nb_id := sizeBlock * 4 / sizeParcel
 	id := 0
 	data := []string{"TimeStamp", "Block", "Id", "Topic"}
