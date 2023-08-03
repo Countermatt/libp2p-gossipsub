@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 	nodeRole := *nodeType
-	sizeParcel := 32
+	sizeParcel := 128
 	if debug {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")
 		log.Printf("\tNickName: %s\n", nickFlag)
