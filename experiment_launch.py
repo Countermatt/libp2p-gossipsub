@@ -4,6 +4,11 @@ import os
 import datetime
 import subprocess
 import time
+import sys
+
+from rich.console import Console
+from rich.progress import track
+
 #Upload launch script to site frontend
 def execute_ssh_command(launch_script, login, site):
     # SSH command in the format 'ssh <username>@<hostname> "<command>"'
@@ -76,27 +81,28 @@ def main():
     launch_script = dir_path +"/" + "run.sh"
 
     #Experiment parameters
-    parcel_size_list = [16, 32, 64, 128, 256]
-    network_size_list = [50, 500, 1000]
+
+    parcel_size_list = [64, 128, 256]
+    network_size_list = [10, 25, 50]
 
     k = 0
-    nb_expe = network_size_list*parcel_size_list
+    nb_expe = len(network_size_list)*len(parcel_size_list)
     nb_cluster_machine = 10 #Number of machine booked on the cluster
     nb_experiment_node = 1000 #Number of nodes running for the experiment
     nb_builder = 1
     prop_validator = 0.20
-    exp_duration = 180  #In seconds
-    experiment_name = "PANDAS"
+    exp_duration = 120  #In seconds
+    batch_experiment_name = "PANDAS-Gossip-"
     current_datetime = datetime.datetime.now()
-    experiment_name += current_datetime.strftime("%Y-%m-%d-%H:%M:%S") 
     size_parcel = 16
     #Network parameters 
+    """
     delay = "10%"
     rate = "1gbit"
     loss = "0%"
     symmetric=True
-
-    walltime_in_s = (exp_duration+10)*nb_expe
+    """
+    walltime_in_s = (exp_duration+60)*nb_expe
     #========== Create and validate Grid5000 and network emulation configurations ==========
     #Log to Grid5000 and check connection
     en.init_logging(level=logging.INFO)
@@ -119,6 +125,7 @@ def main():
 
     #========== Grid5000 network emulation configuration ==========
     #network parameters
+    """
     netem = en.NetemHTB()
     (
         netem.add_constraints(
@@ -134,16 +141,20 @@ def main():
     #Deploy network emulation
     netem.deploy()
     netem.validate()
-
+    """
 
     #========== Deploy Experiment ==========
     #Send launch script to Grid5000 site frontend
     execute_ssh_command(launch_script, login, site)
 
     for network_size in network_size_list:
-        partition = node_partition(nb_cluster_machine, network_size, nb_builder, prop_validator)
+        partition = node_partition(nb_cluster_machine, network_size, 1, prop_validator)
+        
         for parcel_size in parcel_size_list:
             i = 0
+            experiment_name = batch_experiment_name+"-b1-v"+str(int(network_size*prop_validator))+"-nv"+str(network_size-int(network_size*prop_validator)-1)+"-prs"+str(parcel_size)
+            results = en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
+
             for x in roles["experiment"]:
                 with en.actions(roles=x, on_error_continue=True, background=True) as p:
                     builder, validator, regular = partition[i]
@@ -151,17 +162,20 @@ def main():
                     i += 1
             
             h,m,s = convert_seconds_to_time(exp_duration)
+            start = datetime.datetime.now()
             print("Experiment :",k,"/",nb_expe," Begin at: ",start)
             print("Expected to finish at: ",add_time(start,h,m,s + 10))
-            time.sleep(exp_duration + 10)
+            for i in track(range(exp_duration + 10), description="Waiting for experiment to finish..."):
+                time.sleep(1)
             k +=1
-    start = datetime.datetime.now() #Timestamp grid5000 job start
+  #Timestamp grid5000 job start
 
     #========== Wait job and and release grid5000 ressources ==========
 
 
     #Release all Grid'5000 resources
-    netem.destroy()
+    
+    # netem.destroy()
     provider.destroy()
 
 if __name__ == "__main__":

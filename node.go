@@ -176,7 +176,7 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 	writer := csv.NewWriter(file)
 	block := 0
 	print(sizeParcel)
-	nb_id := sizeBlock * 4 / sizeParcel
+	nb_id := sizeBlock * 2 / sizeParcel
 	id := 0
 	data := []string{"TimeStamp", "Block", "Id", "Topic"}
 	err := writer.Write(data)
@@ -197,7 +197,7 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 			}
 
 			// when we receive a message, print it to the message window
-			data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), m.Id, m.Topic}
+			data := []string{strconv.FormatInt(time.Now().Unix(), 10), m.Block, m.Id, m.Topic}
 
 			err := writer.Write(data)
 			if err != nil {
@@ -208,7 +208,7 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 				log.Fatal("Error flushing CSV writer:", err)
 			}
 			if debugMode {
-				fmt.Println(time.Now(), "/ BLOCK:", block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+				fmt.Println(time.Now(), "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 
 				if err != nil {
 					fmt.Println("publish error: %s", err)
