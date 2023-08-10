@@ -172,8 +172,8 @@ func (h *Host) readLoop(topic string) {
 //===================================
 
 // This function handle message communication, process incomming message and send message for validator
-func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
-	writer := csv.NewWriter(file)
+func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
+	writer := csv.NewWriter(file_log)
 	block := 0
 	print(sizeParcel)
 	nb_id := sizeBlock * 2 / sizeParcel
@@ -197,7 +197,8 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 			}
 
 			// when we receive a message, print it to the message window
-			data := []string{strconv.FormatInt(time.Now().Unix(), 10), m.Block, m.Id, m.Topic}
+			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+			data := []string{strconv.FormatInt(timestamp, 10), m.Block, m.Id, m.Topic}
 
 			err := writer.Write(data)
 			if err != nil {
@@ -208,7 +209,8 @@ func handleEventsValidator(cr *Host, file *os.File, debugMode bool, nodeRole str
 				log.Fatal("Error flushing CSV writer:", err)
 			}
 			if debugMode {
-				fmt.Println(time.Now(), "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+				fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 
 				if err != nil {
 					fmt.Println("publish error: %s", err)
@@ -249,12 +251,16 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 		topic := "builder:c" + strconv.Itoa(id%sizeBlock)
 		err := cr.Publish(topic, 0, id, block, sizeBlock)
 		if debugMode {
-			fmt.Println(time.Now(), "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
+			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+
+			fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
 			if err != nil {
 				fmt.Println("publish error: %s", err)
 			}
 		}
-		data := []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(col_sample_list)), topic}
+		timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+
+		data := []string{strconv.FormatInt(timestamp, 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(col_sample_list)), topic}
 
 		err = writer.Write(data)
 		if err != nil {
@@ -269,13 +275,16 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 		//send sample to row topic
 		topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
 		if debugMode {
-			fmt.Println(time.Now(), "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+
+			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+			fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
 
 			if err != nil {
 				fmt.Println("publish error: %s", err)
 			}
 		}
-		data = []string{strconv.FormatInt(time.Now().Unix(), 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(row_sample_list)), topic}
+		timestamp = time.Now().UnixNano() / int64(time.Millisecond)
+		data = []string{strconv.FormatInt(timestamp, 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(row_sample_list)), topic}
 		err = cr.Publish(topic, 1, id, block, sizeBlock)
 
 		err = writer.Write(data)

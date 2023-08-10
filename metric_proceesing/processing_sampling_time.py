@@ -10,20 +10,23 @@ def read_csv(file_path):
             data.append(row)
     return data
 
-def get_result(data):
+def get_result(data, parcel_size):
     result = []
-    i = 1
 
-    tmp = i
-    while i < len(data)-1:
-        if data[i+1]["Block"] != None:
-            
-            if not(data[i]["Block"] == data[tmp]["Block"]):
-                if int(data[i]["TimeStamp"]) - int(data[tmp]["TimeStamp"]) > 0:
-                    result.append(int(data[i]["TimeStamp"]) - int(data[tmp]["TimeStamp"]))
-                    tmp = i
-        i += 1
-    result.append(int(data[i]["TimeStamp"]) - int(data[tmp]["TimeStamp"]))
+    tmp_result = []
+    tmp_block = []
+    for row in data:
+        if int(row["Block"]) in tmp_block:
+            tmp_result[tmp_block.index(int(row["Block"]))].append(int(row["TimeStamp"]))
+        else:
+            tmp_block.append(int(row["Block"]))
+            tmp_result.append([int(row["TimeStamp"])])
+
+    for x in tmp_result:
+        if len(x) >= 512*2/parcel_size:
+            x.sort()
+            result.append(x[-1] - x[0])
+            result.sort()
     return result
 
 def list_directories(directory_path):
@@ -33,8 +36,10 @@ def list_directories(directory_path):
 def calculate_average(lst):
     if not lst:
         return None  # Handle the case when the list is empty to avoid division by zero.
-
-    total = sum(lst)
+    try:
+        total = sum(lst)
+    except:
+        return 0
     average = total / len(lst)
     return average
 
@@ -59,13 +64,17 @@ if __name__ == "__main__":
         for file in files:
             path_file = os.path.join(path, file)
             data = read_csv(path_file)
-            tmp_result = get_result(data)
-            if file.split("-")[0] == "nonvalidator":
-                result[2].append(calculate_average(tmp_result))
-            elif file.split("-")[0] == "validator":
-                result[1].append(calculate_average(tmp_result))
-            else:
-                result[0].append(calculate_average(tmp_result))
+            tmp_result = get_result(data, int(directory.split("-")[-1].split("s")[-1]))
+            if len(tmp_result) > 0:
+                if file.split("-")[0] == "nonvalidator":
+                    #print("a")
+                    result[2] += [tmp_result[-1]]
+                elif file.split("-")[0] == "validator":
+                    #print("b")
+                    result[1] += [tmp_result[-1]]
+                else:
+                    #print("c")
+                    result[0] += [tmp_result[-1]]
         name = directory.split(":")[-1]
         data = [name, str(calculate_average(result[0])), str(calculate_average(result[1])), str(calculate_average(result[2]))]
         append_to_csv( os.path.join(directory_path, "result.csv"), data)
