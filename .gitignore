@@ -1,3 +1,4 @@
 *.csv
 chat
 _tmp_enos_/*
+result/*

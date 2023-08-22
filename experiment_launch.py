@@ -54,8 +54,8 @@ def node_partition(nb_cluster_machine, network_size, nb_builder, prop_validator)
     nb_regular = network_size - nb_validator - nb_builder
     index = 0
     while nb_builder > 0 or nb_validator > 0 or nb_regular > 0:
-        if -index == len(partition):
-            index  = -1
+        if index == len(partition):
+            index  = 0
         if nb_builder > 0:
             partition[index][0] += 1
             nb_builder -= 1
@@ -65,7 +65,7 @@ def node_partition(nb_cluster_machine, network_size, nb_builder, prop_validator)
         elif nb_regular > 0:
             partition[index][2] += 1
             nb_regular -= 1      
-        index -=1
+        index +=1
     return partition
  
 def main():

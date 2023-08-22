@@ -24,10 +24,24 @@ def get_result(data, parcel_size):
 
     for x in tmp_result:
         if len(x) >= 512*2/parcel_size:
-            x.sort()
-            result.append(x[-1] - x[0])
+            sort_list = sorted(x)
+            #result.append(x[int((512*2)/parcel_size) - 1] - x[0])
+            result.append(max(sort_list[ - 1]/1000 - sort_list[0]/1000, (x[int((512*2)/parcel_size) - 1]/1000 - x[0]/1000)))
+
             result.sort()
     return result
+
+def get_result2(data, parcel_size):
+    high = 0
+    lower = 9999999999999999999
+    for x in data:
+        if int(x["TimeStamp"])> high:
+            high = int(x["TimeStamp"])
+        if int(x["TimeStamp"])< lower:
+            lower = int(x["TimeStamp"])
+    result = high - lower
+    result = result/len(data)
+    return result*parcel_size*512
 
 def list_directories(directory_path):
     directories = [entry for entry in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, entry))]
@@ -36,9 +50,9 @@ def list_directories(directory_path):
 def calculate_average(lst):
     if not lst:
         return None  # Handle the case when the list is empty to avoid division by zero.
-    try:
+    if len(lst)>0:
         total = sum(lst)
-    except:
+    else:
         return 0
     average = total / len(lst)
     return average
@@ -61,21 +75,28 @@ if __name__ == "__main__":
         
         files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.split("-")[-1] == "MessageLog.csv"]
         result = [[] for i in range(3)]
+        result2 = [[] for i in range(3)]
         for file in files:
             path_file = os.path.join(path, file)
             data = read_csv(path_file)
-            tmp_result = get_result(data, int(directory.split("-")[-1].split("s")[-1]))
-            if len(tmp_result) > 0:
+            if len(data) > 10:
+                tmp_result = get_result(data, int(directory.split("-")[-1].split("s")[-1]))
+                tmp_2 = get_result2(data, int(directory.split("-")[-1].split("s")[-1]))
                 if file.split("-")[0] == "nonvalidator":
-                    #print("a")
-                    result[2] += [tmp_result[-1]]
+                        #print("a")
+                    result[2] += tmp_result
+                    result2[2].append(tmp_2)
                 elif file.split("-")[0] == "validator":
-                    #print("b")
-                    result[1] += [tmp_result[-1]]
+                        #print("b")
+                    result[1] += tmp_result
+                    result2[1].append(tmp_2)
                 else:
-                    #print("c")
-                    result[0] += [tmp_result[-1]]
+                        #print("c")
+                    result[0] = calculate_average(tmp_result)
+                    result2[0] = tmp_2
         name = directory.split(":")[-1]
-        data = [name, str(calculate_average(result[0])), str(calculate_average(result[1])), str(calculate_average(result[2]))]
-        append_to_csv( os.path.join(directory_path, "result.csv"), data)
+        data = [name, str(result[0]), str(result[1]), str(result[2])]
+        append_to_csv( os.path.join(directory_path, "result3.csv"), data)
+        data2 = [name, str(result2[0]), str(calculate_average(result2[1])), str(calculate_average(result2[2]))]
+        append_to_csv( os.path.join(directory_path, "result2.csv"), data2)
     

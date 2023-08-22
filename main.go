@@ -32,7 +32,7 @@ func main() {
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
 	flag.IntVar(&size, "size", 128, "parcel size")
-	flag.BoolVar(&debug, "debug", true, "debug mode")
+	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
 
 	flag.Parse()
@@ -88,7 +88,7 @@ func main() {
 		if nodeRole == "builder" {
 			for {
 
-				handleEventsBuilder(cr, file, debug, nodeRole, size, sizeBlock, colRow)
+				handleEventsBuilder(cr, file, debug, size, sizeBlock)
 			}
 		} else {
 			for {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -128,6 +127,7 @@ func (h *Host) AddSubTopic(roomName string) error {
 // Publish sends a message to the pubsub topic.
 func (h *Host) Publish(topic string, colRow int, first int, block int, size int) error {
 	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick, first, block)
+	h.messageMetrics.logHashMapElement(m)
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
 		h.messageMetrics.AddErrorSend()
@@ -173,20 +173,10 @@ func (h *Host) readLoop(topic string) {
 
 // This function handle message communication, process incomming message and send message for validator
 func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
-	writer := csv.NewWriter(file_log)
 	block := 0
 	print(sizeParcel)
 	nb_id := sizeBlock * 2 / sizeParcel
 	id := 0
-	data := []string{"TimeStamp", "Block", "Id", "Topic"}
-	err := writer.Write(data)
-	if err != nil {
-		log.Fatal("Error writing CSV:", err)
-	}
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		log.Fatal("Error flushing CSV writer:", err)
-	}
 
 	for {
 		select {
@@ -195,51 +185,24 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 			if id == nb_id {
 				block += 1
 			}
-
+			cr.messageMetrics.logHashMapElement(m)
 			// when we receive a message, print it to the message window
-			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-			data := []string{strconv.FormatInt(timestamp, 10), m.Block, m.Id, m.Topic}
-
-			err := writer.Write(data)
-			if err != nil {
-				log.Fatal("Error writing CSV:", err)
-			}
-			writer.Flush()
-			if err := writer.Error(); err != nil {
-				log.Fatal("Error flushing CSV writer:", err)
-			}
 			if debugMode {
 				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 				fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
-
-				if err != nil {
-					fmt.Println("publish error: %s", err)
-				}
 			}
 			id += 1
 		}
 	}
 }
 
-func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
+func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int) {
 	peerRefreshTicker := time.NewTicker(1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
-	writer := csv.NewWriter(file)
 	row_sample_list := idListRow(sizeParcel, sizeBlock)
 	col_sample_list := idListCol(sizeParcel, sizeBlock)
 	id := 0
-	block := 0
-
-	data := []string{"TimeStamp", "Block", "Id", "Sample col/row", "Topic"}
-
-	err := writer.Write(data)
-	if err != nil {
-		log.Fatal("Error writing CSV:", err)
-	}
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		log.Fatal("Error flushing CSV writer:", err)
-	}
+	block := 1
 
 	for {
 		if id == len(row_sample_list) {
@@ -247,55 +210,33 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, nodeRole strin
 			block += 1
 		}
 
-		//send sample to column topic
+		// ====================send sample to column topic ====================
 		topic := "builder:c" + strconv.Itoa(id%sizeBlock)
 		err := cr.Publish(topic, 0, id, block, sizeBlock)
+		if err != nil {
+			log.Fatal("Publish failed column", err)
+		}
+
+		//Debug Log
 		if debugMode {
 			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-
 			fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
-			if err != nil {
-				fmt.Println("publish error: %s", err)
-			}
-		}
-		timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-
-		data := []string{strconv.FormatInt(timestamp, 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(col_sample_list)), topic}
-
-		err = writer.Write(data)
-		if err != nil {
-			log.Fatal("Error writing CSV:", err)
 		}
 
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			log.Fatal("Error flushing CSV writer:", err)
-		}
-
-		//send sample to row topic
+		// ====================send sample to row topic ====================
 		topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
-		if debugMode {
+		err = cr.Publish(topic, 1, id, block, sizeBlock)
+		if err != nil {
+			log.Fatal("Publish failed row", err)
+		}
 
+		//Debug Log
+		if debugMode {
 			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 			fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
-
-			if err != nil {
-				fmt.Println("publish error: %s", err)
-			}
-		}
-		timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-		data = []string{strconv.FormatInt(timestamp, 10), strconv.Itoa(block), strconv.Itoa(id), strconv.Itoa(len(row_sample_list)), topic}
-		err = cr.Publish(topic, 1, id, block, sizeBlock)
-
-		err = writer.Write(data)
-		if err != nil {
-			log.Fatal("Error writing CSV:", err)
 		}
 
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			log.Fatal("Error flushing CSV writer:", err)
-		}
+		//Write message sent to Log file
 		id += 1
 
 	}

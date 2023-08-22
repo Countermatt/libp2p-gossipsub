@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -79,8 +81,17 @@ func CreateMessage(parcel *Parcel, topic string, sender peer.ID, nick string, id
 
 	message := make([]byte, 0)
 	message = append(message, []byte(strconv.Itoa(parcel.colRow))...)
+	message = append(message, 0x00)
+	message = append(message, 0xFF)
+	message = append(message, 0x00)
 	message = append(message, []byte(strconv.Itoa(parcel.block))...)
+	message = append(message, 0x00)
+	message = append(message, 0xFF)
+	message = append(message, 0x00)
 	message = append(message, []byte(strconv.Itoa(parcel.size))...)
+	message = append(message, 0x00)
+	message = append(message, 0xFF)
+	message = append(message, 0x00)
 	message = append(message, []byte(strconv.Itoa(parcel.first))...)
 
 	m := &Message{
@@ -110,4 +121,26 @@ func CreateParcel(colRow int, block int, size int, first int) *Parcel {
 		data:   randomSlice,
 	}
 	return p
+}
+
+func readMessage(parcel []byte) (int, int, int, int) {
+	delimiter := []byte{0x00, 0xFF, 0x00}
+	elements := bytes.Split(parcel, delimiter)
+	colRow, err := strconv.Atoi(string(elements[0]))
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	block, err := strconv.Atoi(string(elements[1]))
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	size, err := strconv.Atoi(string(elements[2]))
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	first, err := strconv.Atoi(string(elements[3]))
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	return colRow, block, size, first
 }
