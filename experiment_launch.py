@@ -84,15 +84,16 @@ def main():
     #Experiment parameters
 
     parcel_size_list = [16, 32, 64, 128, 256]
-    network_size_list = [100, 500, 1000, 2000]
+    network_size_list = [100, 500, 1000]
+    nb_run = 4
 
     k = 0
-    nb_expe = len(network_size_list)*len(parcel_size_list)
-    nb_cluster_machine = 56 #Number of machine booked on the cluster
+    nb_expe = len(network_size_list)*len(parcel_size_list)*nb_run
+    nb_cluster_machine = 30 #Number of machine booked on the cluster
     nb_experiment_node = 1000 #Number of nodes running for the experiment
     nb_builder = 1
     prop_validator = 0.20
-    exp_duration = 60  #In seconds
+    exp_duration = 40  #In seconds
     batch_experiment_name = "PANDAS-Gossip-"
     current_datetime = datetime.datetime.now()
     size_parcel = 16
@@ -103,7 +104,7 @@ def main():
     loss = "0%"
     symmetric=True
     """
-    walltime_in_s = 300+(exp_duration+120)*nb_expe
+    walltime_in_s = 300+(exp_duration+60)*nb_expe
     #========== Create and validate Grid5000 and network emulation configurations ==========
     #Log to Grid5000 and check connection
     en.init_logging(level=logging.INFO)
@@ -155,41 +156,43 @@ def main():
     #Send launch script to Grid5000 site frontend
     execute_ssh_command(launch_script, login, site)
     k = 0
-    for network_size in network_size_list:
-        partition = node_partition(nb_cluster_machine, network_size, 1, prop_validator)
+
+    for batch in range(len(nb_run)):
+        for network_size in network_size_list:
+            partition = node_partition(nb_cluster_machine, network_size, 1, prop_validator)
+            run_name = batch_experiment_name + str(k)
+            for parcel_size in parcel_size_list:
+                i = 0
+                experiment_name = run_name+"-b1-v"+str(int(network_size*prop_validator))+"-nv"+str(network_size-int(network_size*prop_validator)-1)+"-prs"+str(parcel_size)
+                results = en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
+
+                for x in roles["experiment"]:
+                    if i < len(roles["experiment"]) - 1:
+                        with en.actions(roles=x, on_error_continue=True, background=True) as p:
+                            builder, validator, regular = partition[i]
+                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
+                            i += 1
+                    else:
+                        with en.actions(roles=x, on_error_continue=True, background=False) as p:
+                            builder, validator, regular = partition[i]
+                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
+                k += 1
+                print("Experiment:",k,"/",nb_expe)
+                # h,m,s = convert_seconds_to_time(exp_duration)
+                # start = datetime.datetime.now()
+                # print("Experiment :",k,"/",nb_expe," Begin at: ",start)
+                # print("Expected to finish at: ",add_time(start,h,m,s + 30))
+                # for i in track(range(exp_duration + 30), description="Waiting for experiment to finish..."):
+                #     time.sleep(1)
+                # k +=1
+    #Timestamp grid5000 job start
+
+        #========== Wait job and and release grid5000 ressources ==========
+
+
+        #Release all Grid'5000 resources
         
-        for parcel_size in parcel_size_list:
-            i = 0
-            experiment_name = batch_experiment_name+"-b1-v"+str(int(network_size*prop_validator))+"-nv"+str(network_size-int(network_size*prop_validator)-1)+"-prs"+str(parcel_size)
-            results = en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
-
-            for x in roles["experiment"]:
-                if i < len(roles["experiment"]) - 1:
-                    with en.actions(roles=x, on_error_continue=True, background=True) as p:
-                        builder, validator, regular = partition[i]
-                        p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
-                        i += 1
-                else:
-                    with en.actions(roles=x, on_error_continue=True, background=False) as p:
-                        builder, validator, regular = partition[i]
-                        p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
-            k += 1
-            print("Experiment:",k,"/",nb_expe)
-            # h,m,s = convert_seconds_to_time(exp_duration)
-            # start = datetime.datetime.now()
-            # print("Experiment :",k,"/",nb_expe," Begin at: ",start)
-            # print("Expected to finish at: ",add_time(start,h,m,s + 30))
-            # for i in track(range(exp_duration + 30), description="Waiting for experiment to finish..."):
-            #     time.sleep(1)
-            # k +=1
-  #Timestamp grid5000 job start
-
-    #========== Wait job and and release grid5000 ressources ==========
-
-
-    #Release all Grid'5000 resources
-    
-    # netem.destroy()
+        # netem.destroy()
     provider.destroy()
 
 if __name__ == "__main__":

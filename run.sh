@@ -41,16 +41,12 @@ sleep 1
 if [ "$validator" -ne 0 ]; then
     for ((i=0; i<$validator-1; i++)); do
         go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size" &
-        sleep 1
     done
 
     if [ "$builder" -eq 0 ] && [ "$regular" -ne 0 ]; then
         go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size"
-        sleep 1
-
     else
         go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size" &
-        sleep 1
     fi
 fi
 
@@ -58,15 +54,12 @@ fi
 if [ "$regular" -ne 0 ]; then
     for ((i=0; i<$regular-1; i++)); do
         go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size" &
-        sleep 1
     done
 
     if [ "$builder" -eq 0 ]; then
         go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size"
-        sleep 1
     else
         go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size" &
-        sleep 1
     fi
 
 fi
