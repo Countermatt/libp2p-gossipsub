@@ -69,7 +69,7 @@ def main():
 
     #Node launch script path
     dir_path = os.path.dirname(os.path.realpath(__file__)) #Get current directory path
-    launch_script = dir_path +"/libp2p-gossipsub/" + "run.sh"
+    launch_script = dir_path +"/" + "run.sh"
 
     #Experiment parameters
 
@@ -139,7 +139,7 @@ def main():
 
     #========== Deploy Experiment ==========
     #Send launch script to Grid5000 site frontend
-    execute_ssh_command(launch_script, login, site)
+    #execute_ssh_command(launch_script, login, site)
     k = 0
 
     for batch in range(nb_run):
