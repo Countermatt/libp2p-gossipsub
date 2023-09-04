@@ -77,6 +77,20 @@ if [ "$builder" -ne 0 ]; then
 fi
 
 echo "========== Log copy =========="
+
+directory="/home/$login/results/$experiment_name/"
+target_count=$(($builder + $validator + $regular)*2 + 1)  # Change this to the desired number of files
+
+while true; do
+    file_count=$(find "$directory" -maxdepth 1 -type f | wc -l)
+    if [ "$file_count" -ge "$target_count" ]; then
+        echo "Found $file_count files. Exiting loop."
+        break
+    else
+        echo "Found $file_count files. Waiting for $target_count files..."
+        sleep 5  # Adjust the sleep interval as needed
+    fi
+done
 #cp *.csv /home/$login/results/$experiment_name/
 #sleep 1
 #cp $metrics_file /home/$login/results/$experiment_name/
