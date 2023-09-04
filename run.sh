@@ -79,7 +79,7 @@ fi
 echo "========== Log copy =========="
 
 directory=$(pwd)
-target_count=$(($builder + $validator + $regular)*2 + 1)  # Change this to the desired number of files
+target_count=$((($builder + $validator + $regular) * 2))  # Change this to the desired number of files
 
 while true; do
     file_count=$(find "$directory" -type f -name "*.csv" | wc -l)
