@@ -64,7 +64,7 @@ def main():
     #Grid5000 parameters
     login = "mapigaglio" #Grid5000 login
     site = "nancy" #Grid5000 Site See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
-    cluster = "gros" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
+    cluster = "grisou" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
     job_name = "PANDAS"
 
     #Node launch script path
@@ -73,13 +73,13 @@ def main():
 
     #Experiment parameters
 
-    parcel_size_list = [16, 32, 64, 128, 256, 512]
-    network_size_list = [1000]
+    parcel_size_list = [256]
+    network_size_list = [300]
     nb_run = 4
 
     k = 0
     nb_expe = len(network_size_list)*len(parcel_size_list)*nb_run
-    nb_cluster_machine = 56 #Number of machine booked on the cluster
+    nb_cluster_machine = 20 #Number of machine booked on the cluster
     prop_validator = 0.20
     exp_duration = 30  #In seconds
     batch_experiment_name = "PANDAS-Gossip-"
