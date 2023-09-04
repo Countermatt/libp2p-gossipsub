@@ -1,4 +1,3 @@
-"libp2p-gossipsub/run.sh" 83L, 2264B                                                                                                                                                                                                                                                                        1,8           Top
 #!/bin/bash
 
 # Bash Script to launch Gossipsub PANDAS
@@ -96,6 +95,6 @@ sleep 1
 cp $metrics_file /home/$login/results/$experiment_name/
 sleep 1
 
+cd /tmp
+rm -rf libp2p-gossipsub
 rm go1.20.4.linux-amd64.tar.gz
-#rm -rf *.csv
-#rm -rf *-log

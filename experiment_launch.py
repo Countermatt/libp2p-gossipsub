@@ -75,7 +75,7 @@ def main():
 
     parcel_size_list = [256]
     network_size_list = [300]
-    nb_run = 4
+    nb_run = 1
 
     k = 0
     nb_expe = len(network_size_list)*len(parcel_size_list)*nb_run
