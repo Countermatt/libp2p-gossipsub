@@ -91,10 +91,10 @@ while true; do
         sleep 5  # Adjust the sleep interval as needed
     fi
 done
-#cp *.csv /home/$login/results/$experiment_name/
-#sleep 1
-#cp $metrics_file /home/$login/results/$experiment_name/
-#sleep 1
+cp *.csv /home/$login/results/$experiment_name/
+sleep 1
+cp $metrics_file /home/$login/results/$experiment_name/
+sleep 1
 
 rm go1.20.4.linux-amd64.tar.gz
 #rm -rf *.csv
