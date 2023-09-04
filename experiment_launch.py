@@ -69,7 +69,7 @@ def main():
 
     #Node launch script path
     dir_path = os.path.dirname(os.path.realpath(__file__)) #Get current directory path
-    launch_script = dir_path +"/" + "run.sh"
+    launch_script = dir_path +"/libp2p-gossipsub/" + "run.sh"
 
     #Experiment parameters
 
