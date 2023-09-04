@@ -45,6 +45,7 @@ if [ "$validator" -ne 0 ]; then
         go run . -duration="$duration" -nodeType=validator -size="$parcel_size" &
         echo "validator $i"
         duration=$duration-1
+        sleep 0.5
    done
 
     if [ "$builder" -eq 0 ] && [ "$regular" -ne 0 ]; then
@@ -52,6 +53,7 @@ if [ "$validator" -ne 0 ]; then
     else
         go run . -duration="$duration" -nodeType=validator -size="$parcel_size" &
         duration=$duration-1
+        sleep 0.5
     fi
 fi
 
@@ -61,6 +63,7 @@ if [ "$regular" -ne 0 ]; then
         go run . -duration="$duration" -nodeType=nonvalidator -size="$parcel_size" &
         echo "regular $i"
         duration=$duration-1
+        sleep 0.5
     done
 
     if [ "$builder" -eq 0 ]; then
@@ -68,6 +71,7 @@ if [ "$regular" -ne 0 ]; then
     else
         go run . -duration="$duration" -nodeType=nonvalidator -size="$parcel_size" &
         duration=$duration-1
+        sleep 0.5
     fi
 
 fi
