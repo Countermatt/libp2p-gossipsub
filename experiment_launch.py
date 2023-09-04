@@ -3,12 +3,6 @@ import enoslib as en
 import os
 import datetime
 import subprocess
-import time
-import sys
-
-from rich.console import Console
-from rich.progress import track
-from rich.progress import Progress
 
 #Upload launch script to site frontend
 def execute_ssh_command(launch_script, login, site):
@@ -36,11 +30,7 @@ def add_time(original_time, hours=0, minutes=0, seconds=0):
     new_time = original_time + time_delta
     return new_time
 
-def convert_seconds_to_time(seconds):
-    hours, remainder = divmod(seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    return hours, minutes, seconds
-
+#Convert time in second in hh:mm:ss
 def seconds_to_hh_mm_ss(seconds):
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
@@ -116,7 +106,6 @@ def main():
     )
 
     #Validate Grid5000 configuration
-    start = datetime.datetime.now() #Timestamp grid5000 job start
     provider = en.G5k(conf)
     test = 0
     while test < 10:
@@ -160,7 +149,7 @@ def main():
             for parcel_size in parcel_size_list:
                 i = 0
                 experiment_name = run_name+"-b1-v"+str(int(network_size*prop_validator))+"-nv"+str(network_size-int(network_size*prop_validator)-1)+"-prs"+str(parcel_size)
-                results = en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
+                en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
 
                 for x in roles["experiment"]:
                     if i < len(roles["experiment"]) - 1:
@@ -174,20 +163,8 @@ def main():
                             p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
                 k += 1
                 print("Experiment:",k,"/",nb_expe)
-                # h,m,s = convert_seconds_to_time(exp_duration)
-                # start = datetime.datetime.now()
-                # print("Experiment :",k,"/",nb_expe," Begin at: ",start)
-                # print("Expected to finish at: ",add_time(start,h,m,s + 30))
-                # for i in track(range(exp_duration + 30), description="Waiting for experiment to finish..."):
-                #     time.sleep(1)
-                # k +=1
-    #Timestamp grid5000 job start
 
         #========== Wait job and and release grid5000 ressources ==========
-
-
-        #Release all Grid'5000 resources
-        
         # netem.destroy()
     provider.destroy()
 

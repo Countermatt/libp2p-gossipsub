@@ -28,8 +28,8 @@ if __name__ == "__main__":
     for x in data:
         name.append(x[0])
         builder.append(float(x[1]))
-        validator.append(float(x[2]) + float(x[1]))
-        nvalidator.append(float(x[2]) +float(x[3]) + float(x[1]))
+        validator.append(float(x[2]))
+        nvalidator.append(float(x[2]) +float(x[3]))
     
     n100 = []
     n500 = []
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     plt.plot(x, n1000_nvalidator, label="1000 nodes",color="black" , linestyle="-", marker="s")
     #plt.plot(x, n2000_nvalidator, label="2000 nodes",color="green" , linestyle="-", marker="^")
 
-    plt.axhline(y=4, color='r', linestyle='--', label='Limit validators sampling')
-    plt.axhline(y=10, color='r', linestyle='--', label='Limit regulars sampling')
+    plt.axhline(y=4_000, color='r', linestyle='--', label='Limit validators sampling')
+    plt.axhline(y=10_000, color='r', linestyle='--', label='Limit regulars sampling')
 
     plt.xticks(x, labels=['64', '128', '256'])
     plt.legend()
