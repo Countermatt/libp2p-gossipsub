@@ -78,7 +78,7 @@ fi
 
 echo "========== Log copy =========="
 
-directory="/home/$login/results/$experiment_name/"
+directory="./results/$experiment_name/"
 target_count=$(($builder + $validator + $regular)*2 + 1)  # Change this to the desired number of files
 
 while true; do
