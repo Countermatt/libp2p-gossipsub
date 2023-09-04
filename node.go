@@ -182,6 +182,10 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 		select {
 		//========== Receive Message ==========
 		case m := <-cr.message:
+			idBlock, _ := strconv.Atoi(m.Block)
+			if idBlock == -1 {
+				break
+			}
 			if id == nb_id {
 				block += 1
 			}
@@ -196,7 +200,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	}
 }
 
-func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int) {
+func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int, duration int) {
 	peerRefreshTicker := time.NewTicker(1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
 	row_sample_list := idListRow(sizeParcel, sizeBlock)
@@ -204,42 +208,62 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 	id := 0
 	block := 1
 
+	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
+	defer expeDurationTicker.Stop()
+
 	for {
-		if id == len(row_sample_list) {
-			id = 0
-			block += 1
-		}
+		select {
 
-		// ====================send sample to column topic ====================
-		topic := "builder:c" + strconv.Itoa(id%sizeBlock)
-		err := cr.Publish(topic, 0, id, block, sizeBlock)
-		if err != nil {
-			log.Fatal("Publish failed column", err)
-		}
+		case <-expeDurationTicker.C:
+			if debugMode {
+				fmt.Println("Exit part")
+			}
+			for i := 0; i < len(row_sample_list); i++ {
+				topic := "builder:c" + strconv.Itoa(i%sizeBlock)
+				err := cr.Publish(topic, 0, -1, -1, sizeBlock)
+				if err != nil {
+					log.Fatal("Publish failed column", err)
+				}
+			}
+			return
+		default:
+			if id == len(row_sample_list) {
+				id = 0
+				block += 1
+			}
 
-		//Debug Log
-		if debugMode {
-			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-			fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
-		}
+			// ====================send sample to column topic ====================
+			topic := "builder:c" + strconv.Itoa(id%sizeBlock)
+			err := cr.Publish(topic, 0, id, block, sizeBlock)
+			if err != nil {
+				log.Fatal("Publish failed column", err)
+			}
 
-		// ====================send sample to row topic ====================
-		topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
-		err = cr.Publish(topic, 1, id, block, sizeBlock)
-		if err != nil {
-			log.Fatal("Publish failed row", err)
-		}
+			//Debug Log
+			if debugMode {
+				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+				fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
+			}
 
-		//Debug Log
-		if debugMode {
-			timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-			fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
-		}
+			// ====================send sample to row topic ====================
+			topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
+			err = cr.Publish(topic, 1, id, block, sizeBlock)
+			if err != nil {
+				log.Fatal("Publish failed row", err)
+			}
 
-		//Write message sent to Log file
-		id += 1
+			//Debug Log
+			if debugMode {
+				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+				fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+			}
+
+			//Write message sent to Log file
+			id += 1
+		}
 
 	}
+
 }
 
 // ========== Util Function ==========

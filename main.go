@@ -80,24 +80,12 @@ func main() {
 	}
 	defer file.Close()
 
-	timer := time.NewTimer(time.Duration(duration) * time.Second)
-	time.Sleep(1 * time.Second)
-
 	//Start time for load metrics
-	go func() {
-		if nodeRole == "builder" {
-			for {
-
-				handleEventsBuilder(cr, file, debug, size, sizeBlock)
-			}
-		} else {
-			for {
-				handleEventsValidator(cr, file, debug, nodeRole, size, sizeBlock, colRow)
-			}
-		}
-
-	}()
-	<-timer.C
+	if nodeRole == "builder" {
+		handleEventsBuilder(cr, file, debug, size, sizeBlock, duration)
+	} else {
+		handleEventsValidator(cr, file, debug, nodeRole, size, sizeBlock, colRow)
+	}
 	cr.messageMetrics.WriteMessageGlobalCSV()
 	log.Printf("Timer expired, shutting down...\n")
 

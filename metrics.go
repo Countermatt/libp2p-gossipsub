@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -122,7 +121,6 @@ func (m *MessageGlobalMetrics) WriteMessageGlobalCSV() {
 	}
 
 	for key, value := range m.blocklogHashMap {
-		fmt.Println(key)
 		data = append(data, []string{strconv.Itoa(key), strconv.Itoa(len(value)), strconv.Itoa(int(value[len(value)-1].timestamp - value[0].timestamp))})
 	}
 

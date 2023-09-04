@@ -13,7 +13,6 @@ login=$6
 metrics_file="$(hostname)-log"
 parcel_size=$7
 # ========== Prerequisites Install ==========
-duration=$experiment_duration+($validator+$regular)/2
 echo "========== Prerequisites Install =========="
 # Install experiment on the grid5000 node for better disk usage
 cd /tmp
@@ -32,7 +31,7 @@ go build
 echo "========== Metrics Gathering Launch =========="
 sudo-g5k systemctl start sysstat
 sleep 1
-sar -A -o $metrics_file 1 $duration >/dev/null 2>&1 &
+sar -A -o $metrics_file 1 $experiment_duration >/dev/null 2>&1 &
 sleep 1
 
 # ========== Experiment Launch ==========
@@ -42,17 +41,15 @@ echo "========== Experiment Launch =========="
 # Run validator
 if [ "$validator" -ne 0 ]; then
     for ((i=0; i<$validator; i++)); do
-        go run . -duration="$duration" -nodeType=validator -size="$parcel_size" &
+        go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size" &
         echo "validator $i"
-        duration=$duration-1
         sleep 0.5
    done
 
     if [ "$builder" -eq 0 ] && [ "$regular" -ne 0 ]; then
-        go run . -duration="$duration" -nodeType=validator -size="$parcel_size"
+        go run . -duration"$experiment_duration" -nodeType=validator -size="$parcel_size"
     else
-        go run . -duration="$duration" -nodeType=validator -size="$parcel_size" &
-        duration=$duration-1
+        go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size" &
         sleep 0.5
     fi
 fi
@@ -60,17 +57,15 @@ fi
 # Run other nodes
 if [ "$regular" -ne 0 ]; then
     for ((i=0; i<$regular; i++)); do
-        go run . -duration="$duration" -nodeType=nonvalidator -size="$parcel_size" &
+        go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size" &
         echo "regular $i"
-        duration=$duration-1
         sleep 0.5
     done
 
     if [ "$builder" -eq 0 ]; then
-        go run . -duration="$duration" -nodeType=nonvalidator -size="$parcel_size"
+        go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size"
     else
-        go run . -duration="$duration" -nodeType=nonvalidator -size="$parcel_size" &
-        duration=$duration-1
+        go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size" &
         sleep 0.5
     fi
 
@@ -78,15 +73,15 @@ fi
 
 if [ "$builder" -ne 0 ]; then
     echo "builder launch"
-    go run . -duration="$duration" -nodeType=builder -size="$parcel_size"
+    go run . -duration="$experiment_duration" -nodeType=builder -size="$parcel_size"
 fi
 
 echo "========== Log copy =========="
-cp *.csv /home/$login/results/$experiment_name/
-sleep 1
-cp $metrics_file /home/$login/results/$experiment_name/
-sleep 1
+#cp *.csv /home/$login/results/$experiment_name/
+#sleep 1
+#cp $metrics_file /home/$login/results/$experiment_name/
+#sleep 1
 
 rm go1.20.4.linux-amd64.tar.gz
-rm -rf *.csv
-rm -rf *-log
+#rm -rf *.csv
+#rm -rf *-log
