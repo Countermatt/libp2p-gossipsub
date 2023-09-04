@@ -184,7 +184,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 		case m := <-cr.message:
 			idBlock, _ := strconv.Atoi(m.Block)
 			if idBlock == -1 {
-				break
+				return
 			}
 			if id == nb_id {
 				block += 1
