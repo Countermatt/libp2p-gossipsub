@@ -78,11 +78,11 @@ fi
 
 echo "========== Log copy =========="
 
-directory="./results/$experiment_name/"
+directory=$(pwd)
 target_count=$(($builder + $validator + $regular)*2 + 1)  # Change this to the desired number of files
 
 while true; do
-    file_count=$(find "$directory" -maxdepth 1 -type f | wc -l)
+    file_count=$(find "$directory" -type f -name "*.csv" | wc -l)
     if [ "$file_count" -ge "$target_count" ]; then
         echo "Found $file_count files. Exiting loop."
         break
