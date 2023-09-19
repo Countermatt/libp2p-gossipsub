@@ -266,6 +266,10 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 }
 
+func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
+
+}
+
 // ========== Util Function ==========
 func findElementString(list []string, target string) int {
 	for index, value := range list {

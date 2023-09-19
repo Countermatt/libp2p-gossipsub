@@ -31,7 +31,7 @@ func main() {
 	var debug bool
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
-	flag.IntVar(&size, "size", 128, "parcel size")
+	flag.IntVar(&size, "size", 512, "parcel size")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
 
