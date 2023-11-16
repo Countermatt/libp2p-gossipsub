@@ -50,10 +50,14 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 
 	//Subscribe validators to 2 random row and 2 random column
 	case "validator":
-		column1 := rand.Intn(BlockSize)
-		column2 := rand.Intn(BlockSize)
-		row1 := rand.Intn(BlockSize)
-		row2 := rand.Intn(BlockSize)
+		//column1 := rand.Intn(BlockSize)
+		//column2 := rand.Intn(BlockSize)
+		//row1 := rand.Intn(BlockSize)
+		//row2 := rand.Intn(BlockSize)
+		column1 := 1
+		column2 := 2
+		row1 := 1
+		row2 := 2
 		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column1))
 		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column2))
 		roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row1))
