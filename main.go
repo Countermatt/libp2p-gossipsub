@@ -69,12 +69,13 @@ func main() {
 			panic(err)
 		}
 	*/
-	pi, err := peer.AddrInfoFromP2pAddr(ma.StringCast("/ip4/127.0.0.1/tcp/4001/p2p/QmTracer"))
+	pi, err := peer.AddrInfoFromP2pAddr(ma.StringCast("/ip4/127.0.0.1/tcp/4001/p2p/QmaWz1FJ8VQapx6Q8CtjDw2GGzzKE1nFbL3FZSQrRVBTCA"))
 	if err != nil {
 		panic(err)
 	}
-
-	tracer, err := pubsub.NewRemoteTracer(ctx, h, pi)
+	var pi2 peer.AddrInfo
+	pi2 = *pi
+	tracer, err := pubsub.NewRemoteTracer(ctx, h, pi2)
 	if err != nil {
 		panic(err)
 	}
