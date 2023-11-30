@@ -13,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // DiscoveryInterval is how often we re-publish our mDNS records.
@@ -56,15 +57,27 @@ func main() {
 	}
 
 	//create libp2p tracer
-	logfile := nodeRole + "-" + defaultNick(h.ID()) + "-Log.json"
-	if err := touchFile(logfile); err != nil {
-		fmt.Printf("Error: %v\n", err)
-	}
-	tracer, err := pubsub.NewJSONTracer(logfile)
+	/*
+		logfile := nodeRole + "-" + defaultNick(h.ID()) + "-Log.pb"
+
+		if err := touchFile(logfile); err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+
+		tracer, err := pubsub.NewPBTracer(logfile)
+		if err != nil {
+			panic(err)
+		}
+	*/
+	pi, err := peer.AddrInfoFromP2pAddr(ma.StringCast("/ip4/127.0.0.1/tcp/4001/p2p/QmTracer"))
 	if err != nil {
 		panic(err)
 	}
 
+	tracer, err := pubsub.NewRemoteTracer(ctx, h, pi)
+	if err != nil {
+		panic(err)
+	}
 	// create a PubSub service using the GossipSub router
 	ps, err := pubsub.NewGossipSub(ctx, h, pubsub.WithEventTracer(tracer))
 	if err != nil {
