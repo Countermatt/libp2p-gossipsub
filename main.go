@@ -57,6 +57,9 @@ func main() {
 
 	//create libp2p tracer
 	logfile := nodeRole + "-" + defaultNick(h.ID()) + "-Log.json"
+	if err := touchFile(logfile); err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 	tracer, err := pubsub.NewJSONTracer(logfile)
 	if err != nil {
 		panic(err)
@@ -131,4 +134,21 @@ func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
 	if err != nil {
 		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
 	}
+}
+
+func touchFile(filename string) error {
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Update the modification time of the file to the current time
+	currentTime := time.Now()
+	if err := os.Chtimes(filename, currentTime, currentTime); err != nil {
+		return err
+	}
+
+	fmt.Printf("Touched file: %s\n", filename)
+	return nil
 }
