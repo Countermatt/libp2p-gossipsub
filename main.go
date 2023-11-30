@@ -46,14 +46,24 @@ func main() {
 	}
 
 	//========== Initialise pubsub service ==========
+
+	//create libp2p tracer
+
 	// create a new libp2p Host that listens on a random TCP port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 	if err != nil {
 		panic(err)
 	}
 
+	//create libp2p tracer
+	logfile := nodeRole + "-" + defaultNick(h.ID()) + "-Log.json"
+	tracer, err := pubsub.NewJSONTracer(logfile)
+	if err != nil {
+		panic(err)
+	}
+
 	// create a PubSub service using the GossipSub router
-	ps, err := pubsub.NewGossipSub(ctx, h)
+	ps, err := pubsub.NewGossipSub(ctx, h, pubsub.WithEventTracer(tracer))
 	if err != nil {
 		panic(err)
 	}

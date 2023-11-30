@@ -95,7 +95,8 @@ def main():
     #Log to Grid5000 and check connection
     en.init_logging(level=logging.INFO)
     en.check()
-    network = en.G5kNetworkConf(type="prod", roles=["experiment_network"], site=site)
+    #network = en.G5kNetworkConf(type="prod", roles=["experiment_network"], site=site)
+    network = en.G5kNetworkConf(type="kavlan", roles=["experiment_network"], site=site)
     conf = (
         en.G5kConf.from_settings(job_name=job_name, walltime= seconds_to_hh_mm_ss(walltime_in_s))
         #en.G5kConf.from_settings(job_name=job_name, walltime="01:00:00")
