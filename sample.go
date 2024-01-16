@@ -96,7 +96,7 @@ func CreateMessage(parcel *Parcel, topic string, sender peer.ID, nick string, id
 
 	m := &Message{
 		Message:    message,
-		SenderID:   sender.Pretty(),
+		SenderID:   sender.ShortString(),
 		SenderNick: nick,
 		Topic:      topic,
 		Id:         strconv.Itoa(id),

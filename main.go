@@ -24,23 +24,30 @@ const DiscoveryServiceTag = "PANDAS-gossipsub-mDNS"
 const sizeBlock = 512
 
 const colRow = 0 // 0 for column and 1 for Row parcels
+
+type Config struct {
+	Size          int
+	Debug         bool
+	Duration      int
+	BootstrapPeer string
+}
+
 func main() {
 
 	//========== Experiment arguments ==========
-	var duration int
-	var size int
-	var debug bool
+	config := Config{}
 	nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
-	flag.IntVar(&size, "size", 512, "parcel size")
-	flag.BoolVar(&debug, "debug", false, "debug mode")
-	flag.IntVar(&duration, "duration", 10, "Experiment duration (in seconds).")
+	flag.IntVar(&config.Size, "size", 512, "parcel size")
+	flag.BoolVar(&config.Debug, "debug", false, "debug mode")
+	flag.IntVar(&config.Duration, "duration", 10, "Experiment duration (in seconds).")
+	flag.StringVar(&config.BootstrapPeer, "bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
 
 	flag.Parse()
 	ctx := context.Background()
 	nodeRole := *nodeType
-	log.Printf("Size:", size)
-	if debug {
+	log.Printf("Size:", config.Size)
+	if config.Debug {
 		log.Printf("Running libp2p-das-gossipsub with the following config:\n")
 		log.Printf("\tNickName: %s\n", nickFlag)
 		log.Printf("\tNode Type: %s\n", nodeRole)
@@ -100,18 +107,22 @@ func main() {
 		panic(err)
 	}
 
-	//Create CSV file for logging
-	file, err := os.Create(cr.messageMetrics.messaeLogFile)
+	//========== Initialise Logger ==========
+	//Create Log file
+	file, err := os.OpenFile("./log/"+nick+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatal("Error creating file:", err)
+		log.Fatal("Error opening log file:", err)
 	}
 	defer file.Close()
+	logger := log.New(file, "", 0)
+	logger.SetFlags(0)
+	logger.SetOutput(file)
 
 	//Start time for load metrics
 	if nodeRole == "builder" {
-		handleEventsBuilder(cr, file, debug, size, sizeBlock, duration)
+		handleEventsBuilder(cr, file, config.Debug, config.Size, sizeBlock, config.Duration, logger)
 	} else {
-		handleEventsValidator(cr, file, debug, nodeRole, size, sizeBlock, colRow)
+		handleEventsValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger)
 	}
 	cr.messageMetrics.WriteMessageGlobalCSV()
 	log.Printf("Timer expired, shutting down...\n")
@@ -133,7 +144,7 @@ func setupDiscovery(h host.Host) error {
 }
 
 func shortID(p peer.ID) string {
-	pretty := p.Pretty()
+	pretty := p.ShortString()
 	return pretty[len(pretty)-8:]
 }
 
@@ -143,10 +154,10 @@ type discoveryNotifee struct {
 }
 
 func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
-	fmt.Printf("discovered new peer %s\n", pi.ID.Pretty())
+	fmt.Printf("discovered new peer %s\n", pi.ID.ShortString())
 	err := n.h.Connect(context.Background(), pi)
 	if err != nil {
-		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
+		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.ShortString(), err)
 	}
 }
 

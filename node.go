@@ -129,7 +129,7 @@ func (h *Host) AddSubTopic(roomName string) error {
 }
 
 // Publish sends a message to the pubsub topic.
-func (h *Host) Publish(topic string, colRow int, first int, block int, size int) error {
+func (h *Host) Publish(topic string, colRow int, first int, block int, size int, logger *log.Logger) error {
 	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick, first, block)
 	h.messageMetrics.logHashMapElement(m)
 	msgBytes, err := json.Marshal(m)
@@ -138,6 +138,12 @@ func (h *Host) Publish(topic string, colRow int, first int, block int, size int)
 		return err
 	}
 	h.messageMetrics.AddSend()
+
+	if colRow == 1 {
+		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(1)))
+	} else {
+		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(0)))
+	}
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
 
@@ -176,7 +182,7 @@ func (h *Host) readLoop(topic string) {
 //===================================
 
 // This function handle message communication, process incomming message and send message for validator
-func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
+func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger) {
 	block := 0
 	print(sizeParcel)
 	nb_id := sizeBlock * 2 / sizeParcel
@@ -204,7 +210,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	}
 }
 
-func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int, duration int) {
+func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int, duration int, logger *log.Logger) {
 	peerRefreshTicker := time.NewTicker(1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
 	row_sample_list := idListRow(sizeParcel, sizeBlock)
@@ -224,7 +230,8 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 			}
 			for i := 0; i < len(row_sample_list); i++ {
 				topic := "builder:c" + strconv.Itoa(i%sizeBlock)
-				err := cr.Publish(topic, 0, -1, -1, sizeBlock)
+				err := cr.Publish(topic, 0, -1, -1, sizeBlock, logger)
+
 				if err != nil {
 					log.Fatal("Publish failed column", err)
 				}
@@ -238,7 +245,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 			// ====================send sample to column topic ====================
 			topic := "builder:c" + strconv.Itoa(id%sizeBlock)
-			err := cr.Publish(topic, 0, id, block, sizeBlock)
+			err := cr.Publish(topic, 0, id, block, sizeBlock, logger)
 			if err != nil {
 				log.Fatal("Publish failed column", err)
 			}
@@ -251,7 +258,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 			// ====================send sample to row topic ====================
 			topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
-			err = cr.Publish(topic, 1, id, block, sizeBlock)
+			err = cr.Publish(topic, 1, id, block, sizeBlock, logger)
 			if err != nil {
 				log.Fatal("Publish failed row", err)
 			}
@@ -270,7 +277,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 }
 
-func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int) {
+func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger) {
 
 }
 

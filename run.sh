@@ -96,5 +96,5 @@ cp $metrics_file /home/$login/results/$experiment_name/
 sleep 1
 
 cd /tmp
-rm -rf libp2p-gossipsub
-rm go1.20.4.linux-amd64.tar.gz
+#rm -rf libp2p-gossipsub
+#rm go1.20.4.linux-amd64.tar.gz
