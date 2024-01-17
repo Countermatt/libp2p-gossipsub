@@ -93,6 +93,7 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 				i += 1
 			}
 		}
+		roomNameList = append(roomNameList, "builder:header_dis")
 
 	}
 	h := &Host{
@@ -269,6 +270,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 	blockGenerationTicker := time.NewTicker(Blocktime * time.Second)
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 	defer expeDurationTicker.Stop()
+	defer blockGenerationTicker.Stop()
 
 	for {
 		select {
