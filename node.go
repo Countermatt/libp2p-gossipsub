@@ -158,11 +158,6 @@ func (h *Host) Publish(topic string, colRow int, first int, block int, size int,
 		}
 	}
 
-	if colRow == 1 {
-		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(1)))
-	} else {
-		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(0)))
-	}
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
 
