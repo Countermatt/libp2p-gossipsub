@@ -103,8 +103,10 @@ func main() {
 	//Start time for load metrics
 	if nodeRole == "builder" {
 		handleEventsBuilder(cr, file, config.Debug, config.Size, sizeBlock, config.Duration, logger)
-	} else {
+	} else if nodeRole == "validator" {
 		handleEventsValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger, config.Duration)
+	} else {
+		handleEventsNonValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger, config.Duration)
 	}
 	//cr.messageMetrics.WriteMessageGlobalCSV()
 	log.Printf("Timer expired, shutting down...\n")

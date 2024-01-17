@@ -317,14 +317,20 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 }
 
-func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger) {
+func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int) {
 	block := 0
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
 	id := 0
+	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 
 	for {
 		select {
+		case <-expeDurationTicker.C:
+			if debugMode {
+				fmt.Println("Exit part")
+			}
+			return
 		//========== Receive Message ==========
 		case m := <-cr.message:
 
