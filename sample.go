@@ -152,7 +152,7 @@ func readMessage(parcel []byte) (int, int, int, int) {
 func CreateMessageHeader(topic string, sender peer.ID, nick string, block int) *Message {
 
 	m := &Message{
-		Message:    make([]byte, 508),
+		Message:    make([]byte, sizeHeader),
 		SenderID:   sender.ShortString(),
 		SenderNick: nick,
 		Topic:      topic,

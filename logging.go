@@ -16,6 +16,10 @@ const (
 	ValidatorReceiveColumn
 	BuilderPublishHeader
 	ValidatorReceiveHeader
+	ValidatorPublishRow
+	ValidatorPublishColumn
+	RegularReceiveRow
+	RegularReceiveColumn
 )
 
 type LogEntry struct {

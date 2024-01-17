@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -136,11 +137,24 @@ func (h *Host) AddSubTopic(roomName string) error {
 }
 
 // Publish sends a message to the pubsub topic.
-func (h *Host) Publish(topic string, colRow int, first int, block int, size int, logger *log.Logger) error {
+func (h *Host) Publish(topic string, colRow int, first int, block int, size int, logger *log.Logger, builder bool) error {
 	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick, first, block)
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
 		return err
+	}
+	if builder {
+		if colRow == 1 {
+			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(1)))
+		} else {
+			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(0)))
+		}
+	} else {
+		if colRow == 1 {
+			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(7)))
+		} else {
+			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(6)))
+		}
 	}
 
 	if colRow == 1 {
@@ -228,6 +242,11 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				if idBlock == -1 {
 					return
 				}
+				topic := "validator:" + strings.Split(m.Topic, ",")[1]
+				err := cr.Publish(topic, 0, id, block, sizeBlock, logger, false)
+				if err != nil {
+					log.Fatal("Publish failed column", err)
+				}
 				// when we receive a message, print it to the message window
 				if debugMode {
 					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
@@ -266,7 +285,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 			if id < sizeBlock {
 				// ====================send sample to column topic ====================
 				topic := "builder:c" + strconv.Itoa(id)
-				err := cr.Publish(topic, 0, id, block, sizeBlock, logger)
+				err := cr.Publish(topic, 0, id, block, sizeBlock, logger, true)
 				if err != nil {
 					log.Fatal("Publish failed column", err)
 				}
@@ -279,7 +298,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 				// ====================send sample to row topic ====================
 				topic = "builder:r" + strconv.Itoa(id)
-				err = cr.Publish(topic, 1, id, block, sizeBlock, logger)
+				err = cr.Publish(topic, 1, id, block, sizeBlock, logger, true)
 				if err != nil {
 					log.Fatal("Publish failed row", err)
 				}
@@ -317,9 +336,9 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 				idBlock, _ := strconv.Atoi(m.Block)
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
-					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
+					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(8)))
 				} else {
-					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
+					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(9)))
 				}
 				if idBlock == -1 {
 					return
