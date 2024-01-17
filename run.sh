@@ -14,28 +14,24 @@ parcel_size=$7
 # ========== Prerequisites Install ==========
 echo "========== Prerequisites Install =========="
 # Install experiment on the grid5000 node for better disk usage
-#cd /tmp
+cd /tmp
 
 # Install Go
-#wget "https://go.dev/dl/go1.21.6.linux-amd64.tar.gz"
-#sudo-g5k tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
-#export PATH=$PATH:/usr/local/go/bin
+wget "https://go.dev/dl/go1.21.6.linux-amd64.tar.gz"
+tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
 
 # Clone experiment code
-#git clone https://github.com/Countermatt/libp2p-gossipsub.git
-cp -r ../libp2p-gossipsub /tmp/
+cp -r /home/$login/libp2p-gossipsub /tmp/
 cd /tmp
 cd libp2p-gossipsub
 go build
 
 # ========== Metrics Gathering Launch ==========
 echo "========== Metrics Gathering Launch =========="
-#sudo-g5k systemctl start sysstat
-sleep 1
-sar -A -o $metrics_file 1 $experiment_duration >/dev/null 2>&1 &
-sleep 1
 
 # ========== Experiment Launch ==========
+
 
 echo "========== Experiment Launch =========="
 
@@ -97,10 +93,7 @@ fi
 #         sleep 5  # Adjust the sleep interval as needed
 #     fi
 # done
-# cp *.log /home/$login/results/$experiment_name/
-# sleep 1
-# cp $metrics_file /home/$login/results/$experiment_name/
-# sleep 1
-# cd /tmp
-# #rm -rf libp2p-gossipsub
-# #rm go1.20.4.linux-amd64.tar.gz
+cd /tmp
+cd libp2p-gossipsub
+cp -r log/* /home/$login/results/$experiment_name
+sleep 60

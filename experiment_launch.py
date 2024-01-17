@@ -64,7 +64,7 @@ def main():
     #Grid5000 parameters
     login = "mapigaglio" #Grid5000 login
     site = "nancy" #Grid5000 Site See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
-    cluster = "grisou" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
+    cluster = "gros" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
     job_name = "PANDAS"
 
     #Node launch script path
@@ -79,7 +79,7 @@ def main():
 
     k = 0
     nb_expe = len(network_size_list)*len(parcel_size_list)*nb_run
-    nb_cluster_machine = 10 #Number of machine booked on the cluster
+    nb_cluster_machine = 3 #Number of machine booked on the cluster
     prop_validator = 0.20
     exp_duration = 30  #In seconds
     batch_experiment_name = "PANDAS-Gossip-"
@@ -90,7 +90,7 @@ def main():
     loss = "0%"
     symmetric=True
     """
-    walltime_in_s = 120+(exp_duration+30)*nb_expe
+    walltime_in_s = 600+(exp_duration+30)*nb_expe
     #========== Create and validate Grid5000 and network emulation configurations ==========
     #Log to Grid5000 and check connection
     en.init_logging(level=logging.INFO)
