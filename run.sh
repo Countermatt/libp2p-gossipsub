@@ -18,7 +18,7 @@ cd /tmp
 
 # Install Go
 wget "https://go.dev/dl/go1.21.6.linux-amd64.tar.gz"
-sudo-g5k tar -C /usr/local -xzf go1.20.4.linux-amd64.tar.gz
+sudo-g5k tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 # Clone experiment code
@@ -81,7 +81,7 @@ directory=$(pwd)
 target_count=$((($builder + $validator + $regular) * 2))  # Change this to the desired number of files
 
 while true; do
-    file_count=$(find "$directory" -type f -name "*.csv" | wc -l)
+    file_count=$(find "$directory" -type f -name "*.log" | wc -l)
     if [ "$file_count" -ge "$target_count" ]; then
         echo "Found $file_count files. Exiting loop."
         break
@@ -90,11 +90,10 @@ while true; do
         sleep 5  # Adjust the sleep interval as needed
     fi
 done
-cp *.csv /home/$login/results/$experiment_name/
+cp *.log /home/$login/results/$experiment_name/
 sleep 1
 cp $metrics_file /home/$login/results/$experiment_name/
 sleep 1
-
 cd /tmp
 #rm -rf libp2p-gossipsub
 #rm go1.20.4.linux-amd64.tar.gz

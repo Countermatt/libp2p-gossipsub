@@ -73,13 +73,13 @@ def main():
 
     #Experiment parameters
 
-    parcel_size_list = [256]
-    network_size_list = [300]
+    parcel_size_list = [512]
+    network_size_list = [100]
     nb_run = 1
 
     k = 0
     nb_expe = len(network_size_list)*len(parcel_size_list)*nb_run
-    nb_cluster_machine = 20 #Number of machine booked on the cluster
+    nb_cluster_machine = 10 #Number of machine booked on the cluster
     prop_validator = 0.20
     exp_duration = 30  #In seconds
     batch_experiment_name = "PANDAS-Gossip-"

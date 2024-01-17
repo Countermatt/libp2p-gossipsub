@@ -109,7 +109,7 @@ func main() {
 
 	//========== Initialise Logger ==========
 	//Create Log file
-	file, err := os.OpenFile("./log/"+nick+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("./"+nick+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Error opening log file:", err)
 	}
