@@ -90,7 +90,7 @@ def main():
     loss = "0%"
     symmetric=True
     """
-    walltime_in_s = 600+(exp_duration+30)*nb_expe
+    walltime_in_s = 300+(exp_duration+30)*nb_expe
     #========== Create and validate Grid5000 and network emulation configurations ==========
     #Log to Grid5000 and check connection
     en.init_logging(level=logging.INFO)
@@ -167,7 +167,6 @@ def main():
 
         #========== Wait job and and release grid5000 ressources ==========
         # netem.destroy()
-    provider.destroy()
 
 if __name__ == "__main__":
     main()
