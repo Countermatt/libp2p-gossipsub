@@ -23,14 +23,13 @@ type TopicSubItem struct {
 }
 
 type Host struct {
-	message        chan *Message
-	ctx            context.Context
-	ps             *pubsub.PubSub
-	topicNames     []string
-	topicsubList   []TopicSubItem
-	self           peer.ID
-	nick           string
-	messageMetrics *MessageGlobalMetrics
+	message      chan *Message
+	ctx          context.Context
+	ps           *pubsub.PubSub
+	topicNames   []string
+	topicsubList []TopicSubItem
+	self         peer.ID
+	nick         string
 }
 
 func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname string, nodeType string, BlockSize int) (*Host, error) {
@@ -47,7 +46,7 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 			roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(i))
 			roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(i))
 		}
-
+		roomNameList = append(roomNameList, "builder:header_dis")
 	//Subscribe validators to 2 random row and 2 random column
 	case "validator":
 		//column1 := rand.Intn(BlockSize)
@@ -58,14 +57,24 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 		column2 := 2
 		row1 := 1
 		row2 := 2
+
+		//builder topic
 		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column1))
 		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column2))
 		roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row1))
 		roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row2))
 
+		//header topic
+		roomNameList = append(roomNameList, "builder:header_dis")
+
+		//validator topic
+		roomNameList = append(roomNameList, "validator:c"+strconv.Itoa(column1))
+		roomNameList = append(roomNameList, "validator:c"+strconv.Itoa(column2))
+		roomNameList = append(roomNameList, "validator:r"+strconv.Itoa(row1))
+		roomNameList = append(roomNameList, "validator:r"+strconv.Itoa(row2))
+
 	//Non validator subscribe to 75 random samples
 	default:
-
 		sample := make([]int, 0)
 		i := 0
 		for i < NbSample {
@@ -74,27 +83,25 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 				sample = append(sample, id)
 				column := id % BlockSize
 				row := (id - column) / BlockSize
-				if findElementString(roomNameList, "builder:c"+strconv.Itoa(column)) == -1 {
-					roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column))
+				if findElementString(roomNameList, "validator:c"+strconv.Itoa(column)) == -1 {
+					roomNameList = append(roomNameList, "validator:c"+strconv.Itoa(column))
 				}
-				if findElementString(roomNameList, "builder:r"+strconv.Itoa(row)) == -1 {
-					roomNameList = append(roomNameList, "builder:r"+strconv.Itoa(row))
+				if findElementString(roomNameList, "validator:r"+strconv.Itoa(row)) == -1 {
+					roomNameList = append(roomNameList, "validator:r"+strconv.Itoa(row))
 				}
 				i += 1
 			}
 		}
 
 	}
-	mesMetrics := InitMessageMetrics(nodeType, nickname)
 	h := &Host{
-		ctx:            ctx,
-		ps:             ps,
-		topicNames:     roomNameList,
-		topicsubList:   make([]TopicSubItem, 0),
-		self:           selfID,
-		nick:           nickname,
-		message:        make(chan *Message, ChainBufSize),
-		messageMetrics: mesMetrics,
+		ctx:          ctx,
+		ps:           ps,
+		topicNames:   roomNameList,
+		topicsubList: make([]TopicSubItem, 0),
+		self:         selfID,
+		nick:         nickname,
+		message:      make(chan *Message, ChainBufSize),
 	}
 
 	for i := 0; i < len(roomNameList); i++ {
@@ -131,19 +138,27 @@ func (h *Host) AddSubTopic(roomName string) error {
 // Publish sends a message to the pubsub topic.
 func (h *Host) Publish(topic string, colRow int, first int, block int, size int, logger *log.Logger) error {
 	m := CreateMessage(CreateParcel(colRow, block, size, first), topic, h.self, h.nick, first, block)
-	h.messageMetrics.logHashMapElement(m)
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
-		h.messageMetrics.AddErrorSend()
 		return err
 	}
-	h.messageMetrics.AddSend()
 
 	if colRow == 1 {
 		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(1)))
 	} else {
 		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(0)))
 	}
+	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
+}
+
+func (h *Host) PublishHeader(topic string, block int, logger *log.Logger) error {
+	m := CreateMessageHeader(topic, h.self, h.nick, block)
+	msgBytes, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	logger.Println(formatJSONLogHeaderSend(h.nick, topic, block, BuilderPublishHeader))
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
 
@@ -156,8 +171,8 @@ func (h *Host) readLoop(topic string) {
 	for {
 		msg, err := h.topicsubList[findElementString(h.topicNames, topic)].sub.Next(h.ctx)
 		if err != nil {
+
 			close(h.message)
-			h.messageMetrics.AddErrorReceived()
 			return
 		}
 		// only forward messages delivered by others
@@ -167,11 +182,10 @@ func (h *Host) readLoop(topic string) {
 		cm := new(Message)
 		err = json.Unmarshal(msg.Data, cm)
 		if err != nil {
-			h.messageMetrics.AddErrorReceived()
+			fmt.Println("AAAAA")
 			continue
 		}
 		// send valid messages onto the Messages channel
-		h.messageMetrics.AddReceived()
 		h.message <- cm
 
 	}
@@ -182,30 +196,45 @@ func (h *Host) readLoop(topic string) {
 //===================================
 
 // This function handle message communication, process incomming message and send message for validator
-func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger) {
+func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int) {
 	block := 0
 	print(sizeParcel)
-	nb_id := sizeBlock * 2 / sizeParcel
+	//nb_id := sizeBlock * 2 / sizeParcel
 	id := 0
+	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 
 	for {
 		select {
+		case <-expeDurationTicker.C:
+			if debugMode {
+				fmt.Println("Exit part")
+			}
+			return
 		//========== Receive Message ==========
 		case m := <-cr.message:
-			idBlock, _ := strconv.Atoi(m.Block)
-			if idBlock == -1 {
-				return
-			}
-			if id == nb_id {
+
+			if m.Topic == "builder:header_dis" {
 				block += 1
+				id = 0
+				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
+			} else {
+				idBlock, _ := strconv.Atoi(m.Block)
+				colRow, _, _, _ := readMessage(m.Message)
+				if colRow == 1 {
+					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
+				} else {
+					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
+				}
+				if idBlock == -1 {
+					return
+				}
+				// when we receive a message, print it to the message window
+				if debugMode {
+					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+				}
+				id += 1
 			}
-			cr.messageMetrics.logHashMapElement(m)
-			// when we receive a message, print it to the message window
-			if debugMode {
-				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-				fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
-			}
-			id += 1
 		}
 	}
 }
@@ -216,69 +245,94 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 	row_sample_list := idListRow(sizeParcel, sizeBlock)
 	col_sample_list := idListCol(sizeParcel, sizeBlock)
 	id := 0
-	block := 1
+	block := 0
 
+	blockGenerationTicker := time.NewTicker(Blocktime * time.Second)
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 	defer expeDurationTicker.Stop()
 
 	for {
 		select {
-
+		case <-blockGenerationTicker.C:
+			block += 1
+			id = 0
+			cr.PublishHeader("builder:header", block, logger)
 		case <-expeDurationTicker.C:
 			if debugMode {
 				fmt.Println("Exit part")
 			}
-			for i := 0; i < len(row_sample_list); i++ {
-				topic := "builder:c" + strconv.Itoa(i%sizeBlock)
-				err := cr.Publish(topic, 0, -1, -1, sizeBlock, logger)
-
+			return
+		default:
+			if id < sizeBlock {
+				// ====================send sample to column topic ====================
+				topic := "builder:c" + strconv.Itoa(id)
+				err := cr.Publish(topic, 0, id, block, sizeBlock, logger)
 				if err != nil {
 					log.Fatal("Publish failed column", err)
 				}
-			}
-			return
-		default:
-			if id == len(row_sample_list) {
-				id = 0
-				block += 1
-			}
 
-			// ====================send sample to column topic ====================
-			topic := "builder:c" + strconv.Itoa(id%sizeBlock)
-			err := cr.Publish(topic, 0, id, block, sizeBlock, logger)
-			if err != nil {
-				log.Fatal("Publish failed column", err)
-			}
+				//Debug Log
+				if debugMode {
+					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+					fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
+				}
 
-			//Debug Log
-			if debugMode {
-				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-				fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
-			}
+				// ====================send sample to row topic ====================
+				topic = "builder:r" + strconv.Itoa(id)
+				err = cr.Publish(topic, 1, id, block, sizeBlock, logger)
+				if err != nil {
+					log.Fatal("Publish failed row", err)
+				}
 
-			// ====================send sample to row topic ====================
-			topic = "builder:r" + strconv.Itoa((id-id%sizeBlock)/sizeBlock)
-			err = cr.Publish(topic, 1, id, block, sizeBlock, logger)
-			if err != nil {
-				log.Fatal("Publish failed row", err)
-			}
+				//Debug Log
+				if debugMode {
+					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+					fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+				}
 
-			//Debug Log
-			if debugMode {
-				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-				fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+				//Write message sent to Log file
+				id += 1
 			}
-
-			//Write message sent to Log file
-			id += 1
 		}
-
 	}
 
 }
 
 func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger) {
+	block := 0
+	print(sizeParcel)
+	//nb_id := sizeBlock * 2 / sizeParcel
+	id := 0
 
+	for {
+		select {
+		//========== Receive Message ==========
+		case m := <-cr.message:
+
+			if m.Topic == "builder:header_dis" {
+				block += 1
+				id = 0
+				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(2)))
+			} else {
+				idBlock, _ := strconv.Atoi(m.Block)
+				colRow, _, _, _ := readMessage(m.Message)
+				if colRow == 1 {
+					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
+				} else {
+					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
+				}
+				if idBlock == -1 {
+					return
+				}
+				// when we receive a message, print it to the message window
+				if debugMode {
+					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+				}
+				id += 1
+			}
+		}
+	}
 }
 
 // ========== Util Function ==========

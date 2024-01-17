@@ -46,6 +46,10 @@ type Block struct {
 	numberRow    int
 }
 
+type Header struct {
+	data []byte
+}
+
 // Create a sample based on its size and place in the block
 func CreateSample(column int, row int) *Sample {
 	rand.Seed(time.Now().UnixNano())
@@ -143,4 +147,18 @@ func readMessage(parcel []byte) (int, int, int, int) {
 		fmt.Println("Error:", err)
 	}
 	return colRow, block, size, first
+}
+
+func CreateMessageHeader(topic string, sender peer.ID, nick string, block int) *Message {
+
+	m := &Message{
+		Message:    make([]byte, 508),
+		SenderID:   sender.ShortString(),
+		SenderNick: nick,
+		Topic:      topic,
+		Id:         strconv.Itoa(-1),
+		Block:      strconv.Itoa(block),
+	}
+
+	return m
 }
