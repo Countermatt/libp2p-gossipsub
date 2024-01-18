@@ -271,7 +271,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 		case <-blockGenerationTicker.C:
 			block += 1
 			id = 0
-			cr.PublishHeader("builder:header", block, logger)
+			cr.PublishHeader("builder:header_dis", block, logger)
 
 			for id < sizeBlock {
 				// ====================send sample to column topic ====================
