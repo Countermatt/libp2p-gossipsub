@@ -259,7 +259,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 	row_sample_list := idListRow(sizeParcel, sizeBlock)
 	col_sample_list := idListCol(sizeParcel, sizeBlock)
 	id := 0
-	block := -1
+	block := 0
 
 	blockGenerationTicker := time.NewTicker(Blocktime * time.Second)
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
