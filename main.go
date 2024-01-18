@@ -24,7 +24,7 @@ const DiscoveryInterval = time.Hour
 const DiscoveryServiceTag = "PANDAS-gossipsub-mDNS"
 const sizeBlock = 512
 const sizeHeader = 508
-const Blocktime = 12
+const Blocktime = 5
 
 const colRow = 0 // 0 for column and 1 for Row parcels
 
