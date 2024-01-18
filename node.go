@@ -272,6 +272,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 			block += 1
 			id = 0
 			cr.PublishHeader("builder:header", block, logger)
+
 			for id < sizeBlock {
 				// ====================send sample to column topic ====================
 				topic := "builder:c" + strconv.Itoa(id)
