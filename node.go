@@ -208,9 +208,7 @@ func (h *Host) readLoop(topic string) {
 // This function handle message communication, process incomming message and send message for validator
 func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int) {
 	block := 0
-	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
-	id := 0
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 
 	for {
@@ -225,9 +223,9 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 
 			if m.Topic == "builder:header_dis" {
 				block += 1
-				id = 0
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
-			} else {
+			}
+			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
@@ -238,8 +236,10 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				if idBlock == -1 {
 					return
 				}
-				topic := "validator:" + strings.Split(m.Topic, ",")[1]
-				err := cr.Publish(topic, 0, id, block, sizeBlock, logger, false)
+				topic := "validator:" + strings.Split(m.Topic, ":")[1]
+				id := strings.Split(m.Topic, ":")[1][1:]
+				idi, err := strconv.Atoi(id)
+				err = cr.Publish(topic, 0, idi, block, sizeBlock, logger, false)
 				if err != nil {
 					log.Fatal("Publish failed column", err)
 				}
@@ -248,7 +248,6 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 				}
-				id += 1
 			}
 		}
 	}
@@ -273,42 +272,46 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 			block += 1
 			id = 0
 			cr.PublishHeader("builder:header", block, logger)
+			for {
+				if id < sizeBlock {
+					// ====================send sample to column topic ====================
+					topic := "builder:c" + strconv.Itoa(id)
+					err := cr.Publish(topic, 0, id, block, sizeBlock, logger, true)
+					if err != nil {
+						log.Fatal("Publish failed column", err)
+					}
+
+					//Debug Log
+					if debugMode {
+						timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+						fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
+					}
+
+					// ====================send sample to row topic ====================
+					topic = "builder:r" + strconv.Itoa(id)
+					err = cr.Publish(topic, 1, id, block, sizeBlock, logger, true)
+					if err != nil {
+						log.Fatal("Publish failed row", err)
+					}
+
+					//Debug Log
+					if debugMode {
+						timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+						fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+					}
+
+					//Write message sent to Log file
+					id += 1
+				} else {
+					continue
+				}
+			}
 		case <-expeDurationTicker.C:
 			if debugMode {
 				fmt.Println("Exit part")
 			}
 			return
-		default:
-			if id < sizeBlock {
-				// ====================send sample to column topic ====================
-				topic := "builder:c" + strconv.Itoa(id)
-				err := cr.Publish(topic, 0, id, block, sizeBlock, logger, true)
-				if err != nil {
-					log.Fatal("Publish failed column", err)
-				}
 
-				//Debug Log
-				if debugMode {
-					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-					fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
-				}
-
-				// ====================send sample to row topic ====================
-				topic = "builder:r" + strconv.Itoa(id)
-				err = cr.Publish(topic, 1, id, block, sizeBlock, logger, true)
-				if err != nil {
-					log.Fatal("Publish failed row", err)
-				}
-
-				//Debug Log
-				if debugMode {
-					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-					fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
-				}
-
-				//Write message sent to Log file
-				id += 1
-			}
 		}
 	}
 
@@ -318,7 +321,6 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 	block := 0
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
-	id := 0
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 
 	for {
@@ -330,12 +332,12 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 			return
 		//========== Receive Message ==========
 		case m := <-cr.message:
-
 			if m.Topic == "builder:header_dis" {
 				block += 1
-				id = 0
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(2)))
-			} else {
+			}
+
+			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
@@ -351,7 +353,6 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 				}
-				id += 1
 			}
 		}
 	}
