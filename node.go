@@ -272,39 +272,35 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 			block += 1
 			id = 0
 			cr.PublishHeader("builder:header", block, logger)
-			for {
-				if id < sizeBlock {
-					// ====================send sample to column topic ====================
-					topic := "builder:c" + strconv.Itoa(id)
-					err := cr.Publish(topic, 0, id, block, sizeBlock, logger, true)
-					if err != nil {
-						log.Fatal("Publish failed column", err)
-					}
-
-					//Debug Log
-					if debugMode {
-						timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-						fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
-					}
-
-					// ====================send sample to row topic ====================
-					topic = "builder:r" + strconv.Itoa(id)
-					err = cr.Publish(topic, 1, id, block, sizeBlock, logger, true)
-					if err != nil {
-						log.Fatal("Publish failed row", err)
-					}
-
-					//Debug Log
-					if debugMode {
-						timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-						fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
-					}
-
-					//Write message sent to Log file
-					id += 1
-				} else {
-					break
+			for id < sizeBlock {
+				// ====================send sample to column topic ====================
+				topic := "builder:c" + strconv.Itoa(id)
+				err := cr.Publish(topic, 0, id, block, sizeBlock, logger, true)
+				if err != nil {
+					log.Fatal("Publish failed column", err)
 				}
+
+				//Debug Log
+				if debugMode {
+					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+					fmt.Println(timestamp, "/ BLOCK:", block, "/ Col Id:", id, "/", len(col_sample_list), "/ Topic:", topic)
+				}
+
+				// ====================send sample to row topic ====================
+				topic = "builder:r" + strconv.Itoa(id)
+				err = cr.Publish(topic, 1, id, block, sizeBlock, logger, true)
+				if err != nil {
+					log.Fatal("Publish failed row", err)
+				}
+
+				//Debug Log
+				if debugMode {
+					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+					fmt.Println(timestamp, "/ BLOCK:", block, "/ Row Id:", id, "/", len(row_sample_list), "/ Topic:", topic)
+				}
+
+				//Write message sent to Log file
+				id += 1
 			}
 		case <-expeDurationTicker.C:
 			if debugMode {
