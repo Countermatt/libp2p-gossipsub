@@ -22,6 +22,12 @@ const (
 	RegularReceiveColumn
 )
 
+type LogEvent struct {
+	Timestamp string `json:"timestamp"`
+	EventType int    `json:"eventType"`
+	BlockId   int    `json:"blockId"`
+}
+
 type LogEntry struct {
 	Timestamp   string      `json:"timestamp"`
 	SenderID    string      `json:"SenderID"`
@@ -66,6 +72,24 @@ func formatJSONLogHeaderSend(SenderID string, Topic string, Block int, messageTy
 		Topic:       Topic,
 		Block:       strconv.Itoa(Block),
 		MessageType: BuilderPublishHeader,
+	}
+
+	// Marshal log entry to JSON
+	jsonData, err := json.Marshal(logEntry)
+	if err != nil {
+		log.Println("Error marshaling JSON:", err)
+		return ""
+	}
+
+	return string(jsonData)
+}
+
+func formatJSONLogEvent(eventType int, blockId int) string {
+	// Custom log entry struct
+	logEntry := LogEvent{
+		Timestamp: time.Now().Format(time.RFC3339Nano),
+		EventType: eventType,
+		BlockId:   blockId,
 	}
 
 	// Marshal log entry to JSON

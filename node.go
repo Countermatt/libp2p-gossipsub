@@ -210,7 +210,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	block := 0
 	//nb_id := sizeBlock * 2 / sizeParcel
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
-
+	k := 0
 	for {
 		select {
 		case <-expeDurationTicker.C:
@@ -224,14 +224,17 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 			if m.Topic == "builder:header_dis" {
 				block += 1
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
+				logger.Println(formatJSONLogEvent(1, block))
 			}
 			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
 					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
+					k += 1
 				} else {
 					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
+					k += 1
 				}
 				if idBlock == -1 {
 					return
@@ -247,6 +250,10 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				if debugMode {
 					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
+				}
+
+				if k == 4 {
+					logger.Println(formatJSONLogEvent(2, block))
 				}
 			}
 		}
@@ -272,7 +279,7 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 			block += 1
 			id = 0
 			cr.PublishHeader("builder:header_dis", block, logger)
-
+			logger.Println(formatJSONLogEvent(0, block))
 			for id < sizeBlock {
 				// ====================send sample to column topic ====================
 				topic := "builder:c" + strconv.Itoa(id)
@@ -318,8 +325,8 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 	block := 0
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
+	k := 0
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
-
 	for {
 		select {
 		case <-expeDurationTicker.C:
@@ -332,6 +339,7 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 			if m.Topic == "builder:header_dis" {
 				block += 1
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(2)))
+				logger.Println(formatJSONLogEvent(1, block))
 			}
 
 			if m.Topic != "builder:header_dis" {
@@ -339,8 +347,10 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
 					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(8)))
+					k += 1
 				} else {
 					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(9)))
+					k += 1
 				}
 				if idBlock == -1 {
 					return
@@ -350,7 +360,12 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 				}
+
+				if k == 4 {
+					logger.Println(formatJSONLogEvent(2, block))
+				}
 			}
+
 		}
 	}
 }
