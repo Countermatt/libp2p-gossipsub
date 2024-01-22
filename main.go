@@ -33,6 +33,7 @@ type Config struct {
 	Debug         bool
 	Duration      int
 	BootstrapPeer string
+	NbNodes       int
 }
 
 func main() {
@@ -43,8 +44,9 @@ func main() {
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
 	flag.IntVar(&config.Size, "size", 512, "parcel size")
 	flag.BoolVar(&config.Debug, "debug", false, "debug mode")
-	flag.IntVar(&config.Duration, "duration", 10, "Experiment duration (in seconds).")
+	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
 	flag.StringVar(&config.BootstrapPeer, "bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
+	flag.IntVar(&config.NbNodes, "nodes", 1, "temp for g5k")
 
 	flag.Parse()
 	ctx := context.Background()
@@ -102,11 +104,11 @@ func main() {
 
 	//Start time for load metrics
 	if nodeRole == "builder" {
-		handleEventsBuilder(cr, file, config.Debug, config.Size, sizeBlock, config.Duration, logger)
+		handleEventsBuilder(cr, file, config.Debug, config.Size, sizeBlock, config.Duration, logger, config.NbNodes)
 	} else if nodeRole == "validator" {
-		handleEventsValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger, config.Duration)
+		handleEventsValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger, config.Duration, config.NbNodes)
 	} else {
-		handleEventsNonValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger, config.Duration)
+		handleEventsNonValidator(cr, file, config.Debug, nodeRole, config.Size, sizeBlock, colRow, logger, config.Duration, config.NbNodes)
 	}
 	//cr.messageMetrics.WriteMessageGlobalCSV()
 	log.Printf("Timer expired, shutting down...\n")

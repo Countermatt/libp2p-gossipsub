@@ -206,7 +206,8 @@ func (h *Host) readLoop(topic string) {
 //===================================
 
 // This function handle message communication, process incomming message and send message for validator
-func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int) {
+func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int, nbNodes int) {
+	time.Sleep(time.Duration(nbNodes) * time.Second)
 	block := 0
 	//nb_id := sizeBlock * 2 / sizeParcel
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
@@ -214,9 +215,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	for {
 		select {
 		case <-expeDurationTicker.C:
-			if debugMode {
-				fmt.Println("Exit part")
-			}
+			log.Println("Exit part")
 			return
 		//========== Receive Message ==========
 		case m := <-cr.message:
@@ -254,20 +253,21 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 
 				if k == 4 {
 					logger.Println(formatJSONLogEvent(2, block))
+					k = 0
 				}
 			}
 		}
 	}
 }
 
-func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int, duration int, logger *log.Logger) {
+func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int, sizeBlock int, duration int, logger *log.Logger, nbNodes int) {
+	time.Sleep(time.Duration(nbNodes) * time.Second)
 	peerRefreshTicker := time.NewTicker(1 * time.Millisecond)
 	defer peerRefreshTicker.Stop()
 	row_sample_list := idListRow(sizeParcel, sizeBlock)
 	col_sample_list := idListCol(sizeParcel, sizeBlock)
 	id := 0
 	block := 0
-
 	blockGenerationTicker := time.NewTicker(Blocktime * time.Second)
 	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 	defer expeDurationTicker.Stop()
@@ -321,7 +321,8 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 }
 
-func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int) {
+func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int, nbNodes int) {
+	time.Sleep(time.Duration(nbNodes) * time.Second)
 	block := 0
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
@@ -330,9 +331,7 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 	for {
 		select {
 		case <-expeDurationTicker.C:
-			if debugMode {
-				fmt.Println("Exit part")
-			}
+			log.Println("Exit part")
 			return
 		//========== Receive Message ==========
 		case m := <-cr.message:
@@ -356,13 +355,12 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 					return
 				}
 				// when we receive a message, print it to the message window
-				if debugMode {
-					timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
-				}
+				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+				log.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 
 				if k == 4 {
 					logger.Println(formatJSONLogEvent(2, block))
+					k = 0
 				}
 			}
 
