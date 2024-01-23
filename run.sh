@@ -12,6 +12,7 @@ login=$6
 metrics_file="$(hostname)-log"
 parcel_size=$7
 bootstrap=$8
+echo $bootstrap
 nbNodes=$((builder + validator))
 ((nbNodes += regular))
 # ========== Prerequisites Install ==========
