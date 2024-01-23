@@ -60,17 +60,17 @@ fi
 # Run other nodes
 if [ "$regular" -ne 0 ]; then
     for ((i=0; i<$regular; i++)); do
-        go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size" &
+        go run . -duration="$experiment_duration" -nodeType=regular -size="$parcel_size" &
         echo "regular $i"
         sleep 0.5
         ((nbNodes -= 1))
     done
 
     if [ "$builder" -eq 0 ]; then
-        go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size"
+        go run . -duration="$experiment_duration" -nodeType=regular -size="$parcel_size"
     else
         if [ "$regular" -ne 1 ]; then
-            go run . -duration="$experiment_duration" -nodeType=nonvalidator -size="$parcel_size" &
+            go run . -duration="$experiment_duration" -nodeType=regular -size="$parcel_size" &
             sleep 0.5
             ((nbNodes -= 1))
         fi
