@@ -210,7 +210,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	time.Sleep(time.Duration(nbNodes) * time.Second)
 	block := 0
 	//nb_id := sizeBlock * 2 / sizeParcel
-	expeDurationTicker := time.NewTicker(time.Duration(1200) * time.Second)
+	expeDurationTicker := time.NewTicker(time.Duration(60) * time.Second)
 	k := 0
 	start := false
 	for {
@@ -343,7 +343,7 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 		case m := <-cr.message:
 			if m.Topic == "builder:header_dis" {
 				if !(start) {
-					expeDurationTicker = time.NewTicker(time.Duration(1200) * time.Second)
+					expeDurationTicker = time.NewTicker(time.Duration(60) * time.Second)
 					start = true
 				}
 				block += 1
