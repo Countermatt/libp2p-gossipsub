@@ -41,7 +41,7 @@ func main() {
 	//========== Experiment arguments ==========
 	config := Config{}
 	//nickFlag := flag.String("nick", "", "nickname for node")
-	nodeType := flag.String("nodeType", "builder", "type of node: builder, nonvalidator, builder, validator")
+	nodeType := flag.String("nodeType", "builder", "type of node: builder, regular, validator")
 	flag.IntVar(&config.Size, "size", 512, "parcel size")
 	flag.BoolVar(&config.Debug, "debug", false, "debug mode")
 	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
