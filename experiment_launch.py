@@ -153,15 +153,17 @@ def main():
                 en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
 
                 for x in roles["experiment"]:
+                    results = en.run_command("ip -o -4 addr show scope global | awk '!/^[0-9]+: lo:/ {print $4}' | cut -d '/' -f 1", roles=x)
+                    ip = results[0].payload["stdout"]
                     if i < len(roles["experiment"]) - 1:
                         with en.actions(roles=x, on_error_continue=True, background=True) as p:
                             builder, validator, regular = partition[i]
-                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
+                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip}")
                             i += 1
                     else:
                         with en.actions(roles=x, on_error_continue=True, background=False) as p:
                             builder, validator, regular = partition[i]
-                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
+                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip}")
                 k += 1
                 print("Experiment:",k,"/",nb_expe)
 

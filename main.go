@@ -62,7 +62,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"), libp2p.Identity(prvKey))
+	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/"+config.BootstrapPeer+"/tcp/0"), libp2p.Identity(prvKey))
 	if err != nil {
 		panic(err)
 	}
