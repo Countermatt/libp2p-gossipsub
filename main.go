@@ -45,12 +45,13 @@ func main() {
 	flag.IntVar(&config.Size, "size", 512, "parcel size")
 	flag.BoolVar(&config.Debug, "debug", false, "debug mode")
 	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
-	flag.StringVar(&config.BootstrapPeer, "bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
+	bootstrap := flag.String("bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
 	flag.IntVar(&config.NbNodes, "nodes", 1, "temp for g5k")
 
 	flag.Parse()
 	ctx := context.Background()
 	nodeRole := *nodeType
+	bootstrapIp := *bootstrap
 	size := config.Size
 	log.Printf("Size:%d", size)
 
@@ -62,7 +63,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/"+config.BootstrapPeer+"/tcp/0"), libp2p.Identity(prvKey))
+	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/"+bootstrapIp+"/tcp/0"), libp2p.Identity(prvKey))
 	if err != nil {
 		panic(err)
 	}
