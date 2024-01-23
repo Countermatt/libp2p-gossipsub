@@ -17,11 +17,11 @@ nbNodes=$((builder + validator))
 echo "========== Prerequisites Install =========="
 # Install experiment on the grid5000 node for better disk usage
 cd /tmp
-
-if [ ! -e "go1.21.6.linux-amd64.tar.gz" ]; then
+sudo-g5k
+if [ ! -e go1.21.6.linux-amd64.tar.gz ]; then
     # Install Go
     wget "https://go.dev/dl/go1.21.6.linux-amd64.tar.gz"
-    tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
     export PATH=$PATH:/usr/local/go/bin
     # Clone experiment code
     cp -r /home/$login/libp2p-gossipsub /tmp/
