@@ -53,7 +53,7 @@ if [ "$validator" -ne 0 ]; then
    done
 
     if [ "$builder" -eq 0 ] && [ "$regular" -ne 0 ]; then
-        go run . -duration"$experiment_duration" -nodeType=validator -size="$parcel_size" -bootstrap="$bootstrap" 
+        go run . -duration"=$experiment_duration" -nodeType=validator -size="$parcel_size" -bootstrap="$bootstrap" 
     else
         if [ "$validator" -ne 1 ]; then
             go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size" -bootstrap="$bootstrap" &
