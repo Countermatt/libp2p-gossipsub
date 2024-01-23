@@ -155,7 +155,7 @@ def main():
                 for x in roles["experiment"]:
                     #results = en.run_command("ip -o -4 addr show scope global | awk '!/^[0-9]+: lo:/ {print $4}' | cut -d '/' -f 1", roles=x)
                     results = en.run_command("ip route show | grep -oP 'src \K[0-9.]+'", roles=x)
-                    ip = results[0].payload["stdout"]
+                    ip = str(results[0].payload["stdout"])
                     if i < len(roles["experiment"]) - 1:
                         with en.actions(roles=x, on_error_continue=True, background=True) as p:
                             builder, validator, regular = partition[i]
