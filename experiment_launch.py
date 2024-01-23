@@ -74,7 +74,7 @@ def main():
     #Experiment parameters
 
     parcel_size_list = [512]
-    network_size_list = [100]
+    network_size_list = [1000]
     nb_run = 1
 
     k = 0

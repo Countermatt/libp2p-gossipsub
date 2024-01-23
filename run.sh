@@ -16,18 +16,23 @@ nbNodes=$((builder + validator))
 # ========== Prerequisites Install ==========
 echo "========== Prerequisites Install =========="
 # Install experiment on the grid5000 node for better disk usage
-#cd /tmp
+cd /tmp
 
-# Install Go
-#wget "https://go.dev/dl/go1.21.6.linux-amd64.tar.gz"
-#tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
-#export PATH=$PATH:/usr/local/go/bin
+if [ ! -e "go1.21.6.linux-amd64.tar.gz" ]; then
+    # Install Go
+    wget "https://go.dev/dl/go1.21.6.linux-amd64.tar.gz"
+    tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+    # Clone experiment code
+    cp -r /home/$login/libp2p-gossipsub /tmp/
+    cd /tmp
+    cd libp2p-gossipsub
+    go build .
+fi
 
-# Clone experiment code
-#cp -r /home/$login/libp2p-gossipsub /tmp/
-#cd /tmp
-#cd libp2p-gossipsub
-#go build
+
+
+
 
 # ========== Metrics Gathering Launch ==========
 echo "========== Metrics Gathering Launch =========="
@@ -83,23 +88,7 @@ if [ "$builder" -ne 0 ]; then
     go run . -duration="$experiment_duration" -nodeType=builder -size="$parcel_size"
 fi
 
-
-# echo "========== Log copy =========="
-
-# directory=$(pwd)
-# target_count=$((($builder + $validator + $regular) * 2))  # Change this to the desired number of files
-
-# while true; do
-#     file_count=$(find "$directory" -type f -name "*.log" | wc -l)
-#     if [ "$file_count" -ge "$target_count" ]; then
-#         echo "Found $file_count files. Exiting loop."
-#         break
-#     else
-#         echo "Found $file_count files. Waiting for $target_count files..."
-#         sleep 5  # Adjust the sleep interval as needed
-#     fi
-# done
-#cd /tmp
-#cd libp2p-gossipsub
-#cp -r log/* /home/$login/results/$experiment_name
-#sleep 60
+cd /tmp
+cd libp2p-gossipsub
+cp -r log /home/$login/results/$experiment_name
+sleep 30
