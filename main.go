@@ -52,6 +52,7 @@ func main() {
 	ctx := context.Background()
 	nodeRole := *nodeType
 	bootstrapIp := *bootstrap
+	bootstrapIp = "/ip4/0.0.0.0/tcp/0"
 	size := config.Size
 	log.Printf("Size:%d", size)
 
@@ -63,7 +64,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/"+bootstrapIp+"/tcp/0"), libp2p.Identity(prvKey))
+	h, err := libp2p.New(libp2p.ListenAddrStrings(bootstrapIp), libp2p.Identity(prvKey))
 	if err != nil {
 		panic(err)
 	}
