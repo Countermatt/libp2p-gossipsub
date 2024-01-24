@@ -93,4 +93,3 @@ fi
 cd /tmp
 cd libp2p-gossipsub
 cp -r log /home/$login/results/$experiment_name
-sleep 30
