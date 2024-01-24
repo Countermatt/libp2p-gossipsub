@@ -43,7 +43,7 @@ func main() {
 	//nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, regular, validator")
 	flag.IntVar(&config.Size, "size", 512, "parcel size")
-	flag.BoolVar(&config.Debug, "debug", false, "debug mode")
+	flag.BoolVar(&config.Debug, "debug", true, "debug mode")
 	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
 	//bootstrap := flag.String("bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
 	flag.IntVar(&config.NbNodes, "nodes", 1, "temp for g5k")
