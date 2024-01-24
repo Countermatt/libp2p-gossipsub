@@ -49,7 +49,7 @@ if [ "$validator" -ne 0 ]; then
     for ((i=0; i<$validator; i++)); do
         go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size" &
         echo "validator $i"
-        sleep 0.4
+        sleep 0.5
         ((nbNodes -= 1))
    done
 
@@ -58,7 +58,7 @@ if [ "$validator" -ne 0 ]; then
     else
         if [ "$validator" -ne 1 ]; then
             go run . -duration="$experiment_duration" -nodeType=validator -size="$parcel_size"&
-            sleep 0.4
+            sleep 0.5
             ((nbNodes -= 1))
         fi
     fi
@@ -69,7 +69,7 @@ if [ "$regular" -ne 0 ]; then
     for ((i=0; i<$regular; i++)); do
         go run . -duration="$experiment_duration" -nodeType=regular -size="$parcel_size" &
         echo "regular $i"
-        sleep 0.4
+        sleep 0.5
         ((nbNodes -= 1))
     done
 
@@ -78,7 +78,7 @@ if [ "$regular" -ne 0 ]; then
     else
         if [ "$regular" -ne 1 ]; then
             go run . -duration="$experiment_duration" -nodeType=regular -size="$parcel_size" &
-            sleep 0.4
+            sleep 0.5
             ((nbNodes -= 1))
         fi
     fi
