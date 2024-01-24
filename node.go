@@ -211,6 +211,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	block := 0
 	//nb_id := sizeBlock * 2 / sizeParcel
 	expeDurationTicker := time.NewTicker(time.Duration(180) * time.Second)
+	defer expeDurationTicker.Stop()
 	k := 0
 	start := false
 	for {
@@ -225,6 +226,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				if !(start) {
 					expeDurationTicker = time.NewTicker(time.Duration(duration) * time.Second)
 					start = true
+					defer expeDurationTicker.Stop()
 				}
 				block += 1
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
@@ -334,6 +336,7 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 	k := 0
 	start := false
 	expeDurationTicker := time.NewTicker(time.Duration(180) * time.Second)
+	defer expeDurationTicker.Stop()
 	for {
 		select {
 		case <-expeDurationTicker.C:
@@ -345,6 +348,7 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 				if !(start) {
 					expeDurationTicker = time.NewTicker(time.Duration(duration) * time.Second)
 					start = true
+					defer expeDurationTicker.Stop()
 				}
 				block += 1
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(2)))
@@ -373,8 +377,9 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 					k = 0
 				}
 			}
-
+		default:
 		}
+
 	}
 }
 
