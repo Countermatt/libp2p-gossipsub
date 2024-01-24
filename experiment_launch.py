@@ -161,13 +161,13 @@ def main():
                         en.run_command(f"touch /home/{login}/results/{experiment_name}/{ip}.txt", roles=roles["experiment"][0])
                         with en.actions(roles=x, on_error_continue=True, background=True) as p:
                             builder, validator, regular = partition[i]
-                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip} > /home/{login}/results/{experiment_name}/{ip}.txt 2>&1")
+                            p.shell(f"/home/{login}/libp2p-gossipsub/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip} > /home/{login}/results/{experiment_name}/{ip}.txt 2>&1")
                             i += 1
                     else:
                         en.run_command(f"touch /home/{login}/results/{experiment_name}/{ip}.txt", roles=roles["experiment"][0])
                         with en.actions(roles=x, on_error_continue=True, background=False) as p:
                             builder, validator, regular = partition[i]
-                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip} > /home/{login}/results/{experiment_name}/{ip}.txt 2>&1")
+                            p.shell(f"/home/{login}/libp2p-gossipsub/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip} > /home/{login}/results/{experiment_name}/{ip}.txt 2>&1")
                 k += 1
                 print("Experiment:",k,"/",nb_expe)
 

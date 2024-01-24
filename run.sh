@@ -89,7 +89,3 @@ if [ "$builder" -ne 0 ]; then
     echo "builder launch"
     go run . -duration="$experiment_duration" -nodeType=builder -size="$parcel_size"
 fi
-
-cd /tmp
-cd libp2p-gossipsub
-cp -r log /home/$login/results/$experiment_name
