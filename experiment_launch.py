@@ -158,14 +158,16 @@ def main():
                     ip = str(results[0].payload["stdout"])
                     print(ip)
                     if i < len(roles["experiment"]) - 1:
+                        en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
                         with en.actions(roles=x, on_error_continue=True, background=True) as p:
                             builder, validator, regular = partition[i]
-                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip}")
+                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip} > /home/{login}/results/{experiment_name}/{ip}.txt 2>&1")
                             i += 1
                     else:
+                        en.run_command(f"touch /home/{login}/results/{experiment_name}/{ip}.txt", roles=roles["experiment"][0])
                         with en.actions(roles=x, on_error_continue=True, background=False) as p:
                             builder, validator, regular = partition[i]
-                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip}")
+                            p.shell(f"/home/{login}/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} {ip} > /home/{login}/results/{experiment_name}/{ip}.txt 2>&1")
                 k += 1
                 print("Experiment:",k,"/",nb_expe)
 
