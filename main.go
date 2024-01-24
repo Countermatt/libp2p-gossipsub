@@ -43,7 +43,7 @@ func main() {
 	//nickFlag := flag.String("nick", "", "nickname for node")
 	nodeType := flag.String("nodeType", "builder", "type of node: builder, regular, validator")
 	flag.IntVar(&config.Size, "size", 512, "parcel size")
-	flag.BoolVar(&config.Debug, "debug", true, "debug mode")
+	flag.BoolVar(&config.Debug, "debug", false, "debug mode")
 	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
 	//bootstrap := flag.String("bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
 	flag.IntVar(&config.NbNodes, "nodes", 1, "temp for g5k")
@@ -95,7 +95,7 @@ func main() {
 
 	//========== Initialise Logger ==========
 	//Create Log file
-	file, err := os.OpenFile("/home/mapigaglio/"+nodeRole+"-"+h.ID().String()+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("./log/"+nodeRole+"-"+h.ID().String()+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Error opening log file:", err)
 	}
