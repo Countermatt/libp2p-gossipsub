@@ -133,7 +133,20 @@ type discoveryNotifee struct {
 
 func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
 	fmt.Printf("discovered new peer %s\n", pi.ID.String())
-	err := n.h.Connect(context.Background(), pi)
+
+	try := 0
+	var err error
+	for {
+		err := n.h.Connect(context.Background(), pi)
+		if err == nil {
+			break
+		} else {
+			try += 1
+		}
+		if try == 5 {
+			break
+		}
+	}
 	if err != nil {
 		fmt.Println("AAAAA")
 		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.String(), err)
