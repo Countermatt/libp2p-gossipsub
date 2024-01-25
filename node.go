@@ -213,7 +213,6 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 	expeDurationTicker := time.NewTicker(time.Duration(180) * time.Second)
 	defer expeDurationTicker.Stop()
 	k := 0
-	start := false
 	for {
 		select {
 		case <-expeDurationTicker.C:
@@ -223,11 +222,6 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 		case m := <-cr.message:
 
 			if m.Topic == "builder:header_dis" {
-				if !(start) {
-					expeDurationTicker = time.NewTicker(time.Duration(duration) * time.Second)
-					start = true
-					defer expeDurationTicker.Stop()
-				}
 				block += 1
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
 				logger.Println(formatJSONLogEvent(1, block))
@@ -334,7 +328,6 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
 	k := 0
-	start := false
 	expeDurationTicker := time.NewTicker(time.Duration(180) * time.Second)
 	defer expeDurationTicker.Stop()
 	for {
@@ -345,11 +338,6 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 		//========== Receive Message ==========
 		case m := <-cr.message:
 			if m.Topic == "builder:header_dis" {
-				if !(start) {
-					expeDurationTicker = time.NewTicker(time.Duration(duration) * time.Second)
-					start = true
-					defer expeDurationTicker.Stop()
-				}
 				block += 1
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(2)))
 				logger.Println(formatJSONLogEvent(1, block))
