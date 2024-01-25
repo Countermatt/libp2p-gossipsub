@@ -223,8 +223,10 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 
 			if m.Topic == "builder:header_dis" {
 				block += 1
+				idBlock, _ := strconv.Atoi(m.Block)
+				logger.Println(formatJSONLogEvent(1, idBlock))
 				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
-				logger.Println(formatJSONLogEvent(1, block))
+
 			}
 			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
@@ -253,7 +255,7 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				}
 
 				if k == 4 {
-					logger.Println(formatJSONLogEvent(2, block))
+					logger.Println(formatJSONLogEvent(2, idBlock))
 					k = 0
 				}
 			}
@@ -277,10 +279,10 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 	for {
 		select {
 		case <-blockGenerationTicker.C:
-			block += 1
 			id = 0
 			cr.PublishHeader("builder:header_dis", block, logger)
 			logger.Println(formatJSONLogEvent(0, block))
+			block += 1
 			for id < sizeBlock {
 				// ====================send sample to column topic ====================
 				topic := "builder:c" + strconv.Itoa(id)
@@ -324,7 +326,6 @@ func handleEventsBuilder(cr *Host, file *os.File, debugMode bool, sizeParcel int
 
 func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int, nbNodes int) {
 	time.Sleep(time.Duration(nbNodes) * time.Second)
-	block := 0
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
 	k := 0
@@ -338,9 +339,10 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 		//========== Receive Message ==========
 		case m := <-cr.message:
 			if m.Topic == "builder:header_dis" {
-				block += 1
-				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(2)))
-				logger.Println(formatJSONLogEvent(1, block))
+				idBlock, _ := strconv.Atoi(m.Block)
+				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, idBlock, MessageType(2)))
+
+				logger.Println(formatJSONLogEvent(1, idBlock))
 			}
 
 			if m.Topic != "builder:header_dis" {
@@ -357,11 +359,8 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 					return
 				}
 				// when we receive a message, print it to the message window
-				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-				log.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
-
 				if k == 4 {
-					logger.Println(formatJSONLogEvent(2, block))
+					logger.Println(formatJSONLogEvent(2, idBlock))
 					k = 0
 				}
 			}
