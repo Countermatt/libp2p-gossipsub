@@ -35,7 +35,7 @@ fi
 ip=$(hostname -I | awk '{print $1}')
 apt install sysstat -y
 systemctl start sysstat
-sar -A -o /home/mapigaglio/${ip} 1 $exp_duration >/dev/null 2>&1 &
+sar -A -o /home/$login/${ip} 1 $exp_duration >/dev/null 2>&1 &
 sleep 1
 
 
