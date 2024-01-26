@@ -357,13 +357,15 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(9)))
 					k += 1
 				}
-				if idBlock == -1 {
-					return
-				}
+
 				// when we receive a message, print it to the message window
 				if k == 4 {
 					logger.Println(formatJSONLogEvent(2, idBlock))
 					k = 0
+				}
+
+				if idBlock == -1 {
+					return
 				}
 			}
 		default:
