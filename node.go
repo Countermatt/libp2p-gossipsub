@@ -144,19 +144,19 @@ func (h *Host) Publish(topic string, colRow int, first int, block int, size int,
 	if err != nil {
 		return err
 	}
-	if builder {
-		if colRow == 1 {
-			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(1)))
-		} else {
-			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(0)))
-		}
-	} else {
-		if colRow == 1 {
-			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(7)))
-		} else {
-			logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(6)))
-		}
-	}
+	// if builder {
+	// 	if colRow == 1 {
+	// 		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(1)))
+	// 	} else {
+	// 		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(0)))
+	// 	}
+	// } else {
+	// 	if colRow == 1 {
+	// 		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(7)))
+	// 	} else {
+	// 		logger.Println(formatJSONLogMessageSend(h.nick, colRow, topic, MessageType(6)))
+	// 	}
+	// }
 
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
@@ -168,7 +168,7 @@ func (h *Host) PublishHeader(topic string, block int, logger *log.Logger) error 
 		return err
 	}
 
-	logger.Println(formatJSONLogHeaderSend(h.nick, topic, block, BuilderPublishHeader))
+	// logger.Println(formatJSONLogHeaderSend(h.nick, topic, block, BuilderPublishHeader))
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
 
@@ -225,17 +225,17 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				block += 1
 				idBlock, _ := strconv.Atoi(m.Block)
 				logger.Println(formatJSONLogEvent(1, idBlock))
-				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
+				// logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
 
 			}
 			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
-					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
+					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
 					k += 1
 				} else {
-					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
+					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
 					k += 1
 				}
 
@@ -342,7 +342,7 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 		case m := <-cr.message:
 			if m.Topic == "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
-				logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, idBlock, MessageType(2)))
+				// logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, idBlock, MessageType(2)))
 
 				logger.Println(formatJSONLogEvent(1, idBlock))
 			}
@@ -351,10 +351,10 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 				idBlock, _ := strconv.Atoi(m.Block)
 				colRow, _, _, _ := readMessage(m.Message)
 				if colRow == 1 {
-					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(8)))
+					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(8)))
 					k += 1
 				} else {
-					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(9)))
+					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(9)))
 					k += 1
 				}
 				if idBlock == -1 {
