@@ -34,6 +34,7 @@ type Config struct {
 	Duration      int
 	BootstrapPeer string
 	NbNodes       int
+	LogDir        string
 }
 
 func main() {
@@ -47,6 +48,7 @@ func main() {
 	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
 	//bootstrap := flag.String("bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
 	flag.IntVar(&config.NbNodes, "nodes", 1, "temp for g5k")
+	flag.StringVar(&config.LogDir, "logOutput", "/home/kpeeroo/log/", "Folder for log output")
 
 	flag.Parse()
 	ctx := context.Background()
@@ -55,6 +57,11 @@ func main() {
 	//bootstrapIp = "/ip4/0.0.0.0/tcp/0"
 	size := config.Size
 	log.Printf("Size:%d", size)
+
+	// Check if the logOutput ends with a /
+	if config.LogDir[len(config.LogDir)-1:] != "/" {
+		config.LogDir = config.LogDir + "/"
+	}
 
 	//========== Initialise pubsub service ==========
 
@@ -95,7 +102,7 @@ func main() {
 
 	//========== Initialise Logger ==========
 	//Create Log file
-	file, err := os.OpenFile("/home/kpeeroo/log/"+nodeRole+"-"+h.ID().String()+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(config.LogDir+nodeRole+"-"+h.ID().String()+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Error opening log file:", err)
 	}
