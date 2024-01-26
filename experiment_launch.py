@@ -154,13 +154,11 @@ def main():
 
                 for x in roles["experiment"]:
                     if i < len(roles["experiment"]) - 1:
-                        en.run_command(f"touch /home/{login}/results/{experiment_name}/{ip}.txt", roles=roles["experiment"][0])
                         with en.actions(roles=x, on_error_continue=True, background=True) as p:
                             builder, validator, regular = partition[i]
                             p.shell(f"/home/{login}/libp2p-gossipsub/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
                             i += 1
                     else:
-                        en.run_command(f"touch /home/{login}/results/{experiment_name}/{ip}.txt", roles=roles["experiment"][0])
                         with en.actions(roles=x, on_error_continue=True, background=False) as p:
                             builder, validator, regular = partition[i]
                             p.shell(f"/home/{login}/libp2p-gossipsub/run.sh {exp_duration} {experiment_name} {builder} {validator} {regular} {login} {parcel_size} ")
