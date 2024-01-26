@@ -150,7 +150,6 @@ def main():
             for parcel_size in parcel_size_list:
                 i = 0
                 experiment_name = run_name+"-b1-v"+str(int(network_size*prop_validator))+"-nv"+str(network_size-int(network_size*prop_validator)-1)+"-prs"+str(parcel_size)
-                en.run_command(f"mkdir /home/{login}/results/{experiment_name}", roles=roles["experiment"][0])
 
                 for x in roles["experiment"]:
                     if i < len(roles["experiment"]) - 1:
