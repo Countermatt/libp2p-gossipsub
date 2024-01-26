@@ -50,14 +50,14 @@ func CreateHost(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID, nickname
 		roomNameList = append(roomNameList, "builder:header_dis")
 	//Subscribe validators to 2 random row and 2 random column
 	case "validator":
-		//column1 := rand.Intn(BlockSize)
-		//column2 := rand.Intn(BlockSize)
-		//row1 := rand.Intn(BlockSize)
-		//row2 := rand.Intn(BlockSize)
-		column1 := 1
-		column2 := 2
-		row1 := 1
-		row2 := 2
+		column1 := rand.Intn(BlockSize)
+		column2 := rand.Intn(BlockSize)
+		row1 := rand.Intn(BlockSize)
+		row2 := rand.Intn(BlockSize)
+		//column1 := 1
+		//column2 := 2
+		//row1 := 1
+		//row2 := 2
 
 		//builder topic
 		roomNameList = append(roomNameList, "builder:c"+strconv.Itoa(column1))
@@ -238,13 +238,19 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 					logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
 					k += 1
 				}
+
+				if k == 4 {
+					logger.Println(formatJSONLogEvent(2, idBlock))
+					k = 0
+				}
+
 				if idBlock == -1 {
 					return
 				}
 				topic := "validator:" + strings.Split(m.Topic, ":")[1]
 				id := strings.Split(m.Topic, ":")[1][1:]
 				idi, err := strconv.Atoi(id)
-				err = cr.Publish(topic, 0, idi, block, sizeBlock, logger, false)
+				err = cr.Publish(topic, 0, idi, idBlock, sizeBlock, logger, false)
 				if err != nil {
 					log.Fatal("Publish failed column", err)
 				}
@@ -254,10 +260,6 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 					fmt.Println(timestamp, "/ BLOCK:", m.Block, "/ Id:", m.Id, "/ Topic:", m.Topic)
 				}
 
-				if k == 4 {
-					logger.Println(formatJSONLogEvent(2, idBlock))
-					k = 0
-				}
 			}
 		}
 	}
