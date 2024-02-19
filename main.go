@@ -48,7 +48,7 @@ func main() {
 	flag.IntVar(&config.Duration, "duration", 30, "Experiment duration (in seconds).")
 	//bootstrap := flag.String("bootstrap", "", "multiaddress in string form /ip4/0.0.0.0/tcp/port")
 	flag.IntVar(&config.NbNodes, "nodes", 1, "temp for g5k")
-	flag.StringVar(&config.LogDir, "logOutput", "/home/kpeeroo/log/", "Folder for log output")
+	flag.StringVar(&config.LogDir, "logOutput", "/home/mapigaglio/log/", "Folder for log output")
 
 	flag.Parse()
 	ctx := context.Background()

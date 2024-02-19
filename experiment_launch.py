@@ -62,7 +62,7 @@ def main():
 
     #========== Parameters ==========
     #Grid5000 parameters
-    login = "kpeeroo" #Grid5000 login
+    login = "mapigaglio" #Grid5000 login
     site = "nancy" #Grid5000 Site See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
     cluster = "gros" #Gride5000 Cluster name See: https://www.grid5000.fr/w/Status and https://www.grid5000.fr/w/Hardware
     job_name = "PANDAS"
@@ -79,9 +79,9 @@ def main():
 
     k = 0
     nb_expe = len(network_size_list)*len(parcel_size_list)*nb_run
-    nb_cluster_machine = 80 #Number of machine booked on the cluster
+    nb_cluster_machine = 30 #Number of machine booked on the cluster
     prop_validator = 0.20
-    exp_duration = 30  #In seconds
+    exp_duration = 240  #In seconds
     batch_experiment_name = "PANDAS-Gossip-"
     #Network parameters 
     """
