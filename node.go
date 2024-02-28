@@ -169,6 +169,7 @@ func (h *Host) PublishHeader(topic string, block int, logger *log.Logger) error 
 	}
 
 	logger.Println(formatJSONLogHeaderSend(h.nick, topic, block, BuilderPublishHeader))
+	logger.Println(formatJSONLogEvent(0, block))
 	return h.topicsubList[findElementString(h.topicNames, topic)].topic.Publish(h.ctx, msgBytes)
 }
 
