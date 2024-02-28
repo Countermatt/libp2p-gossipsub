@@ -1,0 +1,1 @@
+[{"hosts": "all", "tasks": [{"name": "shell", "shell": "/home/mapigaglio/run.sh 30 PANDAS-Gossip-0-b1-v200-nv799-prs512 0 67 266 mapigaglio 512 10.16.0.87", "args": {}}], "gather_facts": false, "strategy": "linear"}]
