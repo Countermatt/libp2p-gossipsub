@@ -108,14 +108,8 @@ def main():
 
     #Validate Grid5000 configuration
     provider = en.G5k(conf)
-    test = 0
-    while test < 10:
-        try:
-            roles, networks = provider.init(force_deploy=False)
-            roles = en.sync_info(roles, networks)
-            test += 10
-        except:
-            test += 1
+    roles, networks = provider.init(force_deploy=False)
+    roles = en.sync_info(roles, networks)
 
 
     #========== Grid5000 network emulation configuration ==========

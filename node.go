@@ -209,11 +209,11 @@ func (h *Host) readLoop(topic string) {
 // This function handle message communication, process incomming message and send message for validator
 func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole string, sizeParcel int, sizeBlock int, colRow int, logger *log.Logger, duration int, nbNodes int) {
 	time.Sleep(time.Duration(nbNodes) * time.Second)
+	blockCompletion := make(map[int]int)
 	block := 0
 	//nb_id := sizeBlock * 2 / sizeParcel
-	expeDurationTicker := time.NewTicker(time.Duration(180) * time.Second)
+	expeDurationTicker := time.NewTicker(time.Duration(duration) * time.Second)
 	defer expeDurationTicker.Stop()
-	k := 0
 	for {
 		select {
 		case <-expeDurationTicker.C:
@@ -226,23 +226,15 @@ func handleEventsValidator(cr *Host, file_log *os.File, debugMode bool, nodeRole
 				block += 1
 				idBlock, _ := strconv.Atoi(m.Block)
 				logger.Println(formatJSONLogEvent(1, idBlock))
+				blockCompletion[idBlock] = 4
 				// logger.Println(formatJSONLogHeaderSend(m.SenderID, m.Topic, block, MessageType(4)))
 
 			}
 			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
-				colRow, _, _, _ := readMessage(m.Message)
-				if colRow == 1 {
-					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(2)))
-					k += 1
-				} else {
-					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(3)))
-					k += 1
-				}
-
-				if k == 4 {
+				blockCompletion[idBlock] = blockCompletion[idBlock] - 1
+				if blockCompletion[idBlock] == 0 {
 					logger.Println(formatJSONLogEvent(2, idBlock))
-					k = 0
 				}
 
 				if idBlock == -1 {
