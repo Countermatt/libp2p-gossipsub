@@ -323,8 +323,9 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 	time.Sleep(time.Duration(nbNodes) * time.Second)
 	print(sizeParcel)
 	//nb_id := sizeBlock * 2 / sizeParcel
-	k := 0
 	expeDurationTicker := time.NewTicker(time.Duration(180) * time.Second)
+	blockCompletion := make(map[int]int)
+
 	defer expeDurationTicker.Stop()
 	for {
 		select {
@@ -342,19 +343,9 @@ func handleEventsNonValidator(cr *Host, file_log *os.File, debugMode bool, nodeR
 
 			if m.Topic != "builder:header_dis" {
 				idBlock, _ := strconv.Atoi(m.Block)
-				colRow, _, _, _ := readMessage(m.Message)
-				if colRow == 1 {
-					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(8)))
-					k += 1
-				} else {
-					// logger.Println(formatJSONLogMessageSend(m.SenderID, colRow, m.Topic, MessageType(9)))
-					k += 1
-				}
-
-				// when we receive a message, print it to the message window
-				if k == 4 {
+				blockCompletion[idBlock] = blockCompletion[idBlock] - 1
+				if blockCompletion[idBlock] == 0 {
 					logger.Println(formatJSONLogEvent(2, idBlock))
-					k = 0
 				}
 
 				if idBlock == -1 {
